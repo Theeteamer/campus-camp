@@ -77,7 +77,7 @@ if ($location !== '' && $house_type !== '') {
 </header>
 
 
-<main>
+<main class="results-page">
 
     <section class="results-section">
 

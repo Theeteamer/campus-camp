@@ -103,7 +103,7 @@ if ($result) {
 </header>
 
 
-<main>
+<main class="home-page">
 
     <section class="search-section">
 
