@@ -385,6 +385,7 @@ body > header > .container {
 .site-logo,
 .logo {
 	display: inline-flex;
+	align-self: flex-end;
 	align-items: center;
 	gap: 4.5px;
 	color: var(--ink);
@@ -429,6 +430,7 @@ body > header > .container {
 }
 
 .admin-header-inner strong {
+	align-self: flex-end;
 	font-size: 14px;
 	font-weight: 900;
 }
@@ -1893,6 +1895,13 @@ select option {
 		width: min(100% - 28px, 1160px);
 	}
 
+	body > header {
+		height: 52px;
+		min-height: 52px;
+		max-height: 52px;
+		flex-basis: 52px;
+	}
+
 	h1,
 	.search-section h1 {
 		font-size: 14px;
@@ -1903,6 +1912,29 @@ select option {
 	.admin-header-inner {
 		height: 100%;
 		min-height: 0;
+		justify-content: center;
+	}
+
+	.site-logo,
+	.logo {
+		margin-inline: auto;
+	}
+
+	.admin-header-inner {
+		position: relative;
+	}
+
+	.admin-header-inner strong {
+		position: absolute;
+		left: 50%;
+		max-width: calc(100% - 110px);
+		white-space: nowrap;
+		transform: translateX(-50%);
+	}
+
+	.admin-header-inner > div {
+		position: absolute;
+		right: 0;
 	}
 
 	.site-header nav {
@@ -2000,10 +2032,17 @@ select option {
 .admin-login-box .brand-image {
 	display: inline-block;
 	width: auto;
-	height: 50px;
+	height: 100px;
 	max-width: min(100%, 280px);
 	object-fit: contain;
 	vertical-align: middle;
+}
+
+@media (max-width: 700px) {
+	.site-header .brand-image,
+	.admin-header .brand-image {
+		height: 50px;
+	}
 }
 
 .admin-context {
