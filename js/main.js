@@ -192,7 +192,7 @@
     window.addEventListener("scroll", updateLoadingPosition, {passive: true});
     window.addEventListener("pagehide", function () {
         documentLeaving = true;
-    }, {once: true});
+    });
 
     function playDotWave() {
         const displayWidth = Math.min(window.innerWidth, 800);
@@ -273,6 +273,11 @@
         loadingPanel.setAttribute("aria-hidden", "true");
     }
 
+    window.addEventListener("pageshow", function () {
+        documentLeaving = false;
+        hideLoading();
+    });
+
     function showLoading(continueNavigation) {
         if (navigationPending) {
             return false;
@@ -285,6 +290,10 @@
 
         (async function () {
             await playDotWave();
+
+            if (!navigationPending || documentLeaving) {
+                return;
+            }
 
             if (!continueNavigation) {
                 hideLoading();
@@ -384,13 +393,21 @@
         }
 
         if (link.target && link.target.toLowerCase() !== "_self") {
-            showLoading();
             return;
         }
 
         const href = link.getAttribute("href");
 
         if (!href || href === "#" || href.startsWith("#")) {
+            return;
+        }
+
+        const destination = new URL(link.href, window.location.href);
+
+        if (
+            (destination.protocol !== "http:" && destination.protocol !== "https:") ||
+            destination.origin !== window.location.origin
+        ) {
             return;
         }
 

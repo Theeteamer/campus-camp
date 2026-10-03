@@ -3,7 +3,7 @@
 $host = "127.0.0.1";
 $dbname = "offcampus";
 $username = "root";
-$password = "1998";
+$password = "";
 
 $conn = new mysqli($host, $username, $password, $dbname);
 

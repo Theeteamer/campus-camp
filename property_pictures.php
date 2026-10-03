@@ -118,8 +118,6 @@ $stmt->close();
         body {
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            height: 100dvh;
             min-height: 100vh;
             margin-inline: auto;
             overflow: auto;
@@ -131,7 +129,7 @@ $stmt->close();
 
         .gallery-page {
             display: flex;
-            flex: 1;
+            flex: 0 0 auto;
             flex-direction: column;
             min-height: 0;
             background: #ffffff;
@@ -143,7 +141,7 @@ $stmt->close();
             width: min(800px, 100%);
             height: auto;
             max-height: 600px;
-            flex: 1 1 600px;
+            flex: 0 1 600px;
             min-height: 0;
             margin: 0 auto;
 
