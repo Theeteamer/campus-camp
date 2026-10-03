@@ -50,10 +50,20 @@ body {
 }
 
 main {
+	position: relative;
 	flex: 0 0 auto;
 	width: 100%;
 	color: var(--panel-ink);
 	background: #ffffff;
+}
+
+main.page-content-loading > :not(.page-loading-panel) {
+	opacity: 0;
+	transition: opacity 300ms ease;
+}
+
+main.page-content-ready > :not(.page-loading-panel) {
+	opacity: 1;
 }
 
 main::before {
@@ -174,51 +184,93 @@ h2 {
 	border-bottom: 1px solid var(--line);
 }
 
+body > header {
+	height: 103px;
+	min-height: 103px;
+	max-height: 103px;
+	flex: 0 0 103px;
+}
+
+body > header > .container {
+	height: 100%;
+	min-height: 0;
+}
+
 .page-loading-panel {
 	position: fixed;
-	top: var(--page-loading-top, 0px);
+	top: var(--loader-top, 103px);
+	bottom: var(--loader-bottom, 0px);
 	left: 50%;
-	display: flex;
+	display: grid;
+	place-items: center;
 	width: min(800px, 100vw);
-	height: 20px;
-	align-items: center;
-	justify-content: center;
-	overflow: hidden;
 	opacity: 0;
 	pointer-events: none;
-	z-index: 1001;
+	visibility: hidden;
+	z-index: 999;
 	transform: translateX(-50%);
-	transition: opacity 100ms ease;
+	transition: opacity 200ms ease, visibility 0s linear 200ms;
 	background: #ffffff;
 }
 
 .page-loading-panel.is-open {
 	opacity: 1;
+	visibility: visible;
+	transition-delay: 0s;
 }
 
-.page-loading-dots {
+.page-loading-spinner {
 	position: relative;
-	width: 100%;
-	height: 16px;
+	width: 28px;
+	height: 28px;
+	animation: page-loading-rotation 800ms linear infinite;
 }
 
-.page-loading-dot {
+.page-loading-segment {
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 5px;
+	top: 0;
+	left: 12px;
+	width: 3px;
 	height: 5px;
-	border-radius: 50%;
-	background: #000000;
-	opacity: 0;
-	transform: translate(-50%, -50%);
+	border-radius: 3px;
+	background: #a8b9b0;
+	opacity: 0.62;
+	transform: rotate(calc(var(--segment-index) * 40deg));
+	transform-origin: 1.5px 14px;
+	animation: page-loading-pulse 800ms ease-in-out infinite;
+	animation-delay: calc(var(--segment-index) * -88ms);
+}
+
+.page-loading-segment:first-child {
+	background: #8aa199;
+	opacity: 0.9;
+}
+
+@keyframes page-loading-rotation {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes page-loading-pulse {
+	50% {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.page-loading-spinner,
+	.page-loading-segment {
+		animation-duration: 2.4s;
+	}
 }
 
 .site-header-inner,
 .header-inner,
 .admin-header-inner {
 	display: flex;
-	min-height: 42px;
+	height: 100%;
+	min-height: 0;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
@@ -263,7 +315,7 @@ h2 {
 }
 
 .admin-header-inner {
-	min-height: 38px;
+	height: 100%;
 }
 
 .admin-header-inner strong {
@@ -1739,7 +1791,8 @@ select option {
 	.site-header-inner,
 	.header-inner,
 	.admin-header-inner {
-		min-height: 40px;
+		height: 100%;
+		min-height: 0;
 	}
 
 	.site-header nav {

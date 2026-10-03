@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . "/includes/partial_response.php";
+start_partial_response();
+
 require_once __DIR__ . "/config/database.php";
 
 $location = trim($_GET["location"] ?? "");

@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . "/includes/partial_response.php";
+start_partial_response();
+
 require_once __DIR__ . "/config/database.php";
 
 $property_id = (int)($_GET["id"] ?? 0);
@@ -381,7 +384,11 @@ $stmt->close();
 
     <!-- GALLERY -->
 
-    <section class="gallery-main" aria-label="Property photo viewer">
+    <section
+        class="gallery-main"
+        aria-label="Property photo viewer"
+        data-gallery-images="<?= htmlspecialchars(json_encode(array_column($images, "image_path"), JSON_UNESCAPED_SLASHES), ENT_QUOTES, "UTF-8") ?>"
+    >
 
         <a
             href="<?= htmlspecialchars($return_url, ENT_QUOTES, "UTF-8") ?>"
@@ -418,17 +425,16 @@ $stmt->close();
                 <button
                     type="button"
                     class="gallery-button previous"
+                    data-gallery-action="previous"
                     aria-label="Previous picture"
                     title="Previous picture"
-                    onclick="previousImage()"
                 ><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
-
                 <button
                     type="button"
                     class="gallery-button next"
+                    data-gallery-action="next"
                     aria-label="Next picture"
                     title="Next picture"
-                    onclick="nextImage()"
                 ><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             <?php endif; ?>
 
@@ -538,6 +544,9 @@ function previousImage() {
 document.addEventListener(
     "keydown",
     function (event) {
+        if (!galleryImage.isConnected) {
+            return;
+        }
 
         if (event.key === "ArrowRight") {
 

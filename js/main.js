@@ -1,57 +1,38 @@
 (function () {
     "use strict";
 
-    const entryDuration = 500;
-    const entryStagger = 60;
-    const exitStartDelay = entryDuration + entryStagger * 4 + 100;
-    const exitDuration = 380;
-    const exitStagger = 30;
-    const clearPause = 150;
-    const dotSpacing = 10;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const buttonLinkSelector = [
-        ".site-header a",
-        ".admin-header a",
-        ".search-button-link",
-        ".go-button",
-        ".browse-pictures-button",
-        ".admin-button",
-        ".cancel-button",
-        ".back-button",
-        ".back-link",
-        ".call-button",
-        ".whatsapp-button",
-        ".admin-dashboard-button",
-        ".admin-login-link",
-        ".action-links a",
-        ".delete-image-link",
-        ".legal-return"
-    ].join(",");
     const bypassedForms = new WeakSet();
-    const bypassedLinks = new WeakSet();
     let navigationPending = false;
     let documentLeaving = false;
     let pendingDeleteLink = null;
+    let fragmentNavigationUsed = false;
+    let houseTypeRequest = 0;
+    let loadingCloseTimeout = null;
 
     const header = document.querySelector(".site-header, .admin-header");
+    const footer = document.querySelector("body > footer");
     const loadingPanel = document.createElement("div");
     loadingPanel.className = "page-loading-panel";
     loadingPanel.setAttribute("role", "status");
+    loadingPanel.setAttribute("aria-label", "Loading");
     loadingPanel.setAttribute("aria-live", "polite");
     loadingPanel.setAttribute("aria-hidden", "true");
 
-    const dots = document.createElement("span");
-    dots.className = "page-loading-dots";
-    dots.setAttribute("aria-hidden", "true");
+    const spinner = document.createElement("span");
+    spinner.className = "page-loading-spinner";
+    spinner.setAttribute("aria-hidden", "true");
 
-    for (let dot = 0; dot < 5; dot += 1) {
-        const loadingDot = document.createElement("span");
-        loadingDot.className = "page-loading-dot";
-        dots.appendChild(loadingDot);
+    for (let segment = 0; segment < 9; segment += 1) {
+        const loadingSegment = document.createElement("span");
+        loadingSegment.className = "page-loading-segment";
+        loadingSegment.style.setProperty("--segment-index", String(segment));
+        spinner.appendChild(loadingSegment);
     }
 
-    loadingPanel.appendChild(dots);
-    document.body.appendChild(loadingPanel);
+    loadingPanel.appendChild(spinner);
+    const initialMain = document.querySelector("main");
+    (initialMain || document.body).appendChild(loadingPanel);
 
     const deleteDialog = document.createElement("dialog");
     deleteDialog.className = "admin-confirm-dialog";
@@ -112,6 +93,10 @@
 
         function collectContent(element) {
             Array.from(element.children).forEach(function (child) {
+                if (child.classList.contains("page-loading-panel")) {
+                    return;
+                }
+
                 if (child.classList.contains("container") ||
                     child.classList.contains("property-section") ||
                     child.classList.contains("legal-container") ||
@@ -183,99 +168,54 @@
     animatePageIn();
 
     function updateLoadingPosition() {
-        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
-        loadingPanel.style.setProperty("--page-loading-top", `${headerBottom}px`);
+        const viewportHeight = window.innerHeight;
+        const headerBottom = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+        let footerSpace = 0;
+
+        if (footer) {
+            const footerTop = footer.getBoundingClientRect().top;
+            footerSpace = Math.min(
+                Math.max(viewportHeight - footerTop, 0),
+                Math.max(viewportHeight - headerBottom, 0)
+            );
+        }
+
+        loadingPanel.style.setProperty("--loader-top", `${headerBottom}px`);
+        loadingPanel.style.setProperty("--loader-bottom", `${footerSpace}px`);
     }
 
     updateLoadingPosition();
     window.addEventListener("resize", updateLoadingPosition);
     window.addEventListener("scroll", updateLoadingPosition, {passive: true});
+
     window.addEventListener("pagehide", function () {
         documentLeaving = true;
     });
 
-    function playDotWave() {
-        const displayWidth = Math.min(window.innerWidth, 800);
-        const halfWidth = displayWidth / 2;
-        const exitEndTime = exitStartDelay + exitStagger * 4 + exitDuration;
-        const loadingDots = Array.from(loadingPanel.querySelectorAll(".page-loading-dot"));
+    function hideLoading(animate) {
+        navigationPending = false;
 
-        if (reducedMotion) {
-            return new Promise(function (resolve) {
-                window.setTimeout(resolve, clearPause);
-            });
+        if (loadingCloseTimeout !== null) {
+            window.clearTimeout(loadingCloseTimeout);
+            loadingCloseTimeout = null;
         }
 
-        return new Promise(function (resolve) {
-            const startTime = performance.now();
+        if (!animate) {
+            loadingPanel.classList.remove("is-open");
+            loadingPanel.setAttribute("aria-hidden", "true");
+            return;
+        }
 
-            function renderFrame(now) {
-                const elapsed = now - startTime;
-
-                loadingDots.forEach(function (dot, index) {
-                    const clusterOffset = (2 - index) * dotSpacing;
-                    const entryStart = index * entryStagger;
-                    const entryElapsed = elapsed - entryStart;
-                    const entryProgress = Math.min(Math.max(entryElapsed / entryDuration, 0), 1);
-                    const startX = -halfWidth - 3 - index * 18;
-                    const clusterX = clusterOffset;
-                    let x = startX;
-                    let opacity = 0;
-
-                    if (entryElapsed < 0) {
-                        x = startX;
-                    } else if (entryProgress < 1) {
-                        const easing = (1 - Math.exp(-4 * entryProgress)) / (1 - Math.exp(-4));
-                        x = startX + (clusterX - startX) * easing;
-                        opacity = Math.min(entryProgress * 8, 1);
-                    } else if (elapsed < exitStartDelay + index * exitStagger) {
-                        const crawlElapsed = Math.max(entryElapsed - entryDuration, 0);
-                        x = clusterX + crawlElapsed * 0.022;
-                        opacity = 1;
-                    } else {
-                        const exitElapsed = Math.min(
-                            elapsed - exitStartDelay - index * exitStagger,
-                            exitDuration
-                        );
-                        const exitProgress = exitElapsed / exitDuration;
-                        const exitFrom = clusterX +
-                            Math.max(exitStartDelay + index * exitStagger - entryStart - entryDuration, 0) * 0.022;
-                        const exitTo = halfWidth + 4;
-                        const initialVelocity = 0.022;
-                        const cubicFactor = (exitTo - exitFrom - initialVelocity * exitDuration) /
-                            (exitDuration ** 3);
-
-                        x = exitFrom + initialVelocity * exitElapsed + cubicFactor * (exitElapsed ** 3);
-                        opacity = 1 - exitProgress;
-                    }
-
-                    dot.style.opacity = String(opacity);
-                    dot.style.transform = `translate(calc(-50% + ${x}px), -50%)`;
-                });
-
-                if (elapsed < exitEndTime) {
-                    window.requestAnimationFrame(renderFrame);
-                } else {
-                    loadingDots.forEach(function (dot) {
-                        dot.style.opacity = "0";
-                    });
-                    window.setTimeout(resolve, clearPause);
-                }
-            }
-
-            window.requestAnimationFrame(renderFrame);
-        });
-    }
-
-    function hideLoading() {
         loadingPanel.classList.remove("is-open");
-        navigationPending = false;
-        loadingPanel.setAttribute("aria-hidden", "true");
+        loadingCloseTimeout = window.setTimeout(function () {
+            loadingPanel.setAttribute("aria-hidden", "true");
+            loadingCloseTimeout = null;
+        }, 200);
     }
 
     window.addEventListener("pageshow", function () {
         documentLeaving = false;
-        hideLoading();
+        hideLoading(false);
     });
 
     function showLoading(continueNavigation) {
@@ -283,36 +223,150 @@
             return false;
         }
 
+        const loadingStartedAt = performance.now();
         navigationPending = true;
         updateLoadingPosition();
+        if (loadingCloseTimeout !== null) {
+            window.clearTimeout(loadingCloseTimeout);
+            loadingCloseTimeout = null;
+        }
         loadingPanel.removeAttribute("aria-hidden");
         loadingPanel.classList.add("is-open");
 
         (async function () {
-            await playDotWave();
+            await new Promise(function (resolve) {
+                window.requestAnimationFrame(resolve);
+            });
 
             if (!navigationPending || documentLeaving) {
                 return;
             }
 
             if (!continueNavigation) {
-                hideLoading();
+                hideLoading(true);
                 return;
             }
 
-            continueNavigation();
+            const navigation = continueNavigation();
+            if (navigation && typeof navigation.then === "function") {
+                function finishAfterMinimumDuration() {
+                    const remainingDuration = Math.max(
+                        0,
+                        1000 - (performance.now() - loadingStartedAt)
+                    );
 
-            if (reducedMotion) {
-                hideLoading();
-                return;
-            }
+                    window.setTimeout(function () {
+                        if (navigationPending && !documentLeaving) {
+                            hideLoading(true);
+                        }
+                    }, remainingDuration);
+                }
 
-            while (navigationPending && !documentLeaving) {
-                await playDotWave();
+                navigation.then(
+                    finishAfterMinimumDuration,
+                    function (error) {
+                        console.error("Navigation did not complete.", error);
+                        finishAfterMinimumDuration();
+                    }
+                );
             }
         })();
 
         return true;
+    }
+
+    function isAdminUrl(url) {
+        return /\/admin(?:\/|$)/.test(url.pathname);
+    }
+
+    function canNavigatePartially(url) {
+        return url.origin === window.location.origin &&
+            isAdminUrl(url) === Boolean(document.querySelector(".admin-header"));
+    }
+
+    async function loadPartial(url, updateHistory, scrollY) {
+        const destination = new URL(url, window.location.href);
+        const currentMain = document.querySelector("main");
+
+        if (!currentMain || !canNavigatePartially(destination)) {
+            window.location.assign(destination.href);
+            return;
+        }
+
+        try {
+            const response = await fetch(destination.href, {
+                headers: {
+                    "X-Partial-Request": "1",
+                    "Accept": "text/html"
+                },
+                credentials: "same-origin"
+            });
+
+            if (
+                !response.ok ||
+                response.redirected ||
+                response.headers.get("X-Partial-Response") !== "main"
+            ) {
+                window.location.assign(destination.href);
+                return;
+            }
+
+            const html = await response.text();
+            const template = document.createElement("template");
+            template.innerHTML = html;
+            const nextMain = template.content.querySelector("main");
+
+            if (!nextMain) {
+                window.location.assign(destination.href);
+                return;
+            }
+
+            if (updateHistory) {
+                history.replaceState(
+                    {...history.state, scrollY: window.scrollY},
+                    "",
+                    window.location.href
+                );
+                history.pushState({scrollY: 0}, "", destination.href);
+            }
+
+            nextMain.classList.add("page-content-loading");
+            nextMain.appendChild(loadingPanel);
+            currentMain.replaceWith(nextMain);
+            updateLoadingPosition();
+            fragmentNavigationUsed = true;
+
+            const encodedTitle = response.headers.get("X-Partial-Title");
+            if (encodedTitle) {
+                document.title = decodeURIComponent(encodedTitle);
+            }
+
+            window.scrollTo(0, updateHistory ? 0 : Math.max(0, scrollY || 0));
+
+            await Promise.all(Array.from(nextMain.querySelectorAll("img")).map(function (image) {
+                if (typeof image.decode !== "function") {
+                    return Promise.resolve();
+                }
+
+                return image.decode().catch(function (error) {
+                    console.error("Unable to decode page image.", error);
+                });
+            }));
+
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
+
+            nextMain.classList.add("page-content-ready");
+            await new Promise(function (resolve) {
+                window.requestAnimationFrame(function () {
+                    window.requestAnimationFrame(resolve);
+                });
+            });
+        } catch (error) {
+            console.error("Partial page navigation failed; loading the full page instead.", error);
+            window.location.assign(destination.href);
+        }
     }
 
     document.addEventListener("submit", function (event) {
@@ -336,6 +390,36 @@
             : form.target;
 
         if (target && target.toLowerCase() !== "_self") {
+            return;
+        }
+
+        if (form.method.toLowerCase() === "get" &&
+            form.enctype.toLowerCase() !== "multipart/form-data") {
+            event.preventDefault();
+
+            const submitter = event.submitter;
+            const action = submitter && submitter.hasAttribute("formaction")
+                ? submitter.formAction
+                : form.action;
+            const destination = new URL(action, window.location.href);
+            const formData = new FormData(form);
+
+            if (submitter && submitter.name) {
+                formData.append(submitter.name, submitter.value);
+            }
+
+            new URLSearchParams(formData).forEach(function (value, name) {
+                destination.searchParams.append(name, value);
+            });
+
+            if (!canNavigatePartially(destination)) {
+                window.location.assign(destination.href);
+                return;
+            }
+
+            showLoading(function () {
+                return loadPartial(destination.href, true, 0);
+            });
             return;
         }
 
@@ -383,12 +467,7 @@
             return;
         }
 
-        if (bypassedLinks.has(link)) {
-            bypassedLinks.delete(link);
-            return;
-        }
-
-        if (!link.matches(buttonLinkSelector) || link.hasAttribute("download")) {
+        if (link.hasAttribute("download")) {
             return;
         }
 
@@ -406,7 +485,8 @@
 
         if (
             (destination.protocol !== "http:" && destination.protocol !== "https:") ||
-            destination.origin !== window.location.origin
+            !canNavigatePartially(destination) ||
+            /\/(?:logout|delete_[^/]+)\.php$/i.test(destination.pathname)
         ) {
             return;
         }
@@ -414,13 +494,134 @@
         event.preventDefault();
 
         showLoading(function () {
-            if (/^javascript:/i.test(href)) {
-                bypassedLinks.add(link);
-                link.click();
-                return;
-            }
-
-            window.location.assign(link.href);
+            return loadPartial(destination.href, true, 0);
         });
+    });
+
+    window.addEventListener("popstate", function (event) {
+        const destination = new URL(window.location.href);
+
+        if (!canNavigatePartially(destination)) {
+            window.location.reload();
+            return;
+        }
+
+        showLoading(function () {
+            return loadPartial(destination.href, false, event.state && event.state.scrollY);
+        });
+    });
+
+    document.addEventListener("change", function (event) {
+        if (!fragmentNavigationUsed || !(event.target instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        if (event.target.id !== "location") {
+            return;
+        }
+
+        const houseTypeSelect = document.getElementById("house_type");
+        if (!houseTypeSelect) {
+            return;
+        }
+
+        const allTypes = JSON.parse(houseTypeSelect.dataset.allTypes || "[]");
+        const location = event.target.value;
+        const requestId = ++houseTypeRequest;
+
+        function setOptions(types) {
+            houseTypeSelect.replaceChildren(new Option("Any type", ""));
+            types.forEach(function (type) {
+                houseTypeSelect.add(new Option(type, type));
+            });
+        }
+
+        if (!location) {
+            setOptions(allTypes);
+            return;
+        }
+
+        houseTypeSelect.replaceChildren(new Option("Loading...", "", true, true));
+        fetch("get_house_types.php?location=" + encodeURIComponent(location))
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("Unable to load house types (" + response.status + ").");
+                }
+                return response.json();
+            })
+            .then(function (types) {
+                if (requestId === houseTypeRequest) {
+                    setOptions(types);
+                }
+            })
+            .catch(function (error) {
+                if (requestId !== houseTypeRequest) {
+                    return;
+                }
+
+                console.error("House type loading failed.", error);
+                houseTypeSelect.replaceChildren(
+                    new Option("Unable to load types; try again.", "", true, true)
+                );
+            });
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!(event.target instanceof Element)) {
+            return;
+        }
+
+        const galleryButton = event.target.closest("[data-gallery-action]");
+        if (!galleryButton) {
+            return;
+        }
+
+        const gallery = galleryButton.closest("[data-gallery-images]");
+        if (!gallery) {
+            return;
+        }
+
+        const images = JSON.parse(gallery.dataset.galleryImages || "[]");
+        const image = gallery.querySelector(".gallery-image");
+        const counter = document.getElementById("currentNumber");
+
+        if (!image || images.length < 2) {
+            return;
+        }
+
+        let index = Number(gallery.dataset.galleryIndex || "0");
+        index = galleryButton.dataset.galleryAction === "next"
+            ? (index + 1) % images.length
+            : (index - 1 + images.length) % images.length;
+        gallery.dataset.galleryIndex = String(index);
+        image.src = images[index];
+
+        if (counter) {
+            counter.textContent = String(index + 1);
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (!fragmentNavigationUsed) {
+            return;
+        }
+
+        const gallery = document.querySelector("[data-gallery-images]");
+        if (!gallery) {
+            return;
+        }
+
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            const action = event.key === "ArrowRight" ? "next" : "previous";
+            const button = gallery.querySelector('[data-gallery-action="' + action + '"]');
+            if (button) {
+                button.click();
+            }
+        } else if (event.key === "Escape") {
+            const returnLink = gallery.querySelector(".gallery-return");
+            if (returnLink) {
+                returnLink.click();
+            }
+        }
     });
 })();
