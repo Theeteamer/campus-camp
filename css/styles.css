@@ -290,25 +290,6 @@ h2 {
 	border-bottom: 1px solid var(--line);
 }
 
-body > header::after {
-	content: "Kisii University";
-	position: absolute;
-	right: 8px;
-	bottom: 4px;
-	z-index: 1;
-	padding-left: 11px;
-	color: #1d4d3b;
-	background: var(--chrome);
-	background-image: radial-gradient(circle, #1d4d3b 0 3px, transparent 3.5px);
-	background-repeat: no-repeat;
-	background-position: left center;
-	background-size: 6px 6px;
-	font-size: 10px;
-	font-weight: 900;
-	line-height: 1;
-	white-space: nowrap;
-}
-
 body > header {
 	height: 77px;
 	min-height: 77px;
@@ -2047,11 +2028,6 @@ select option {
 		font-size: 14px;
 	}
 
-	body > header::after {
-		right: 5px;
-		bottom: 2px;
-		font-size: 8px;
-	}
 }
 
 @media (max-width: 420px) {
