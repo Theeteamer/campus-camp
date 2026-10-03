@@ -27,6 +27,21 @@ if (!$landlord) {
     exit;
 }
 
+$stmt = $conn->prepare("
+    SELECT id, name, location
+    FROM properties
+    WHERE landlord_id = ?
+    ORDER BY name ASC
+");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$property_result = $stmt->get_result();
+$properties = [];
+while ($row = $property_result->fetch_assoc()) {
+    $properties[] = $row;
+}
+$stmt->close();
+
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -36,6 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($name === "" || $phone === "" || $location === "") {
         $error = "Please complete all landlord fields.";
+    } elseif (empty($properties)) {
+        $error = "At least one property listing is required before saving this landlord.";
     } else {
         $check = $conn->prepare("SELECT id FROM landlords WHERE phone = ? AND id != ? LIMIT 1");
         $check->bind_param("si", $phone, $id);
@@ -59,6 +76,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt->close();
         }
     }
+
+    $landlord["name"] = $name;
+    $landlord["phone"] = $phone;
+    $landlord["location"] = $location;
 }
 ?>
 
@@ -88,11 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <div>
 
-            <a href="dashboard.php">Dashboard</a>
-            &nbsp; | &nbsp;
-            <a href="landlords.php">Landlords</a>
-            &nbsp; | &nbsp;
-            <a href="logout.php">Logout</a>
+            <a href="logout.php">Log out</a>
 
         </div>
 
@@ -102,16 +119,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <main class="admin-main">
 
+    <div class="admin-content-actions">
+        <div class="container">
+            <a href="landlords.php" class="cancel-button" aria-label="Back to landlords" title="Back to landlords">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span class="button-label">Back</span>
+            </a>
+        </div>
+    </div>
+
     <div class="container">
 
-        <div class="admin-page-title">
+        <div class="admin-page-title edit-landlord-page-title">
 
             <div>
 
-                <h1>Edit Landlord</h1>
+                <h1>Make changes to Accomodation Owners.</h1>
 
                 <p>
-                    Update landlord information.
+                    Update landlord details.
                 </p>
 
             </div>
@@ -124,13 +150,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
         <?php endif; ?>
 
-        <form method="POST" class="admin-form">
+        <?php if (!empty($properties)): ?>
+            <form method="GET" action="edit_property.php" class="property-selection-form">
+                <label for="property_id">
+                    Property listings
+                    <select name="id" id="property_id" required>
+                        <?php foreach ($properties as $property): ?>
+                            <option value="<?= (int)$property["id"] ?>">
+                                <?= htmlspecialchars($property["name"] . " · " . $property["location"]) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
 
+                <button type="submit" class="admin-button" aria-label="Edit landlord property listing" title="Edit">
+                    <i class="fa fa-pencil" aria-hidden="true"></i>
+                    <span class="button-label">Edit</span>
+                </button>
+            </form>
+        <?php else: ?>
+            <div class="error-message admin-error">
+                At least one property listing is required before this landlord can be saved.
+                <a href="add_property.php">List a property</a>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" class="admin-form landlord-edit-form">
             <div class="form-section">
 
                 <h2>Landlord Details</h2>
 
-                <label for="name">Landlord Name *</label>
+                <label for="name">Name *</label>
                 <input type="text" name="name" id="name" value="<?= htmlspecialchars($landlord["name"]) ?>" required>
 
                 <label for="phone">Phone Number *</label>
@@ -143,13 +193,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             <div class="form-actions">
 
-                <button type="submit" class="admin-button">
-                    SAVE CHANGES
+                <button type="submit" class="admin-button" aria-label="Save landlord" title="Save" <?= empty($properties) ? "disabled" : "" ?>>
+                    <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                    <span class="button-label">Save</span>
                 </button>
-
-                <a href="landlords.php" class="cancel-button">
-                    CANCEL
-                </a>
 
             </div>
 
@@ -159,6 +206,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 </main>
 
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>

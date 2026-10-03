@@ -409,12 +409,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | KEEP ENTERED VALUES ON VALIDATION ERROR
-    |--------------------------------------------------------------------------
-    */
-
     $property["landlord_name"] =
         $landlord_name;
 
@@ -477,7 +471,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     >
 
     <title>
-        Edit Property - Campus-Camp®
+        Edit Property
     </title>
 
 
@@ -491,10 +485,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body>
 
-
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
 
 <header class="admin-header">
 
@@ -517,43 +507,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 
         <div>
-
-            <a href="dashboard.php">
-                Dashboard
-            </a>
-
-            &nbsp; | &nbsp;
-
-
-            <a href="properties.php">
-                Properties
-            </a>
-
-            &nbsp; | &nbsp;
-
-
-            <a href="logout.php">
-                Logout
-            </a>
-
+            <a href="logout.php">Log out</a>
         </div>
 
     </div>
 
 </header>
 
-
-
-<!-- =========================================================
-     MAIN
-     ========================================================= -->
-
 <main class="admin-main">
 
+    <div class="admin-content-actions">
+        <div class="container">
+            <a href="properties.php" class="cancel-button" aria-label="Back to properties" title="Back to properties">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span class="button-label">Back</span>
+            </a>
+        </div>
+    </div>
+
     <div class="container">
-
-
-        <!-- PAGE TITLE -->
 
         <div class="admin-page-title">
 
@@ -564,16 +536,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 </h1>
 
                 <p>
-                    Update accommodation information.
+                    Update accommodation information. Deleting property listing is irreversible!
                 </p>
 
             </div>
 
         </div>
-
-
-
-        <!-- ERROR -->
 
         <?php if ($error): ?>
 
@@ -586,22 +554,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <?php endif; ?>
 
 
-
-        <!-- =================================================
-             FORM
-             ================================================= -->
-
         <form
             method="POST"
             class="admin-form"
         >
 
-
-            <!-- =================================================
-                 LANDLORD
-                 ================================================= -->
-
-            <div class="form-section">
+            <div class="form-section form-section-divider">
 
                 <h2>
                     Landlord Details
@@ -649,11 +607,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
 
 
-
-            <!-- =================================================
-                 PROPERTY
-                 ================================================= -->
-
             <div class="form-section">
 
                 <h2>
@@ -688,7 +641,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 
                 <label for="house_type">
-                    House Type <span class="required-mark">*</span>
+                    Type of Housing <span class="required-mark">*</span>
                 </label>
 
                 <div class="select-wrap">
@@ -775,7 +728,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         value="Semester"
                         <?= $property["payment_period"] === "Semester" ? "selected" : "" ?>
                     >
-                        Semester
+                        Semester / 4 Months
                     </option>
 
                     </select>
@@ -821,11 +774,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             </div>
 
-
-
-            <!-- =================================================
-                 FACILITIES
-                 ================================================= -->
 
             <div class="form-section">
 
@@ -888,44 +836,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
 
 
-
-            <!-- =================================================
-                 ACTIONS
-                 ================================================= -->
-
             <div class="form-actions">
-
-
-                <!-- SAVE -->
 
                 <button
                     type="submit"
                     class="admin-button"
+                    aria-label="Save property"
+                    title="Save property"
                 >
-                    SAVE CHANGES
+                    <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                    <span class="button-label">Save</span>
                 </button>
-
-
-                <!-- ADD IMAGES -->
 
                 <a
                     href="property_images.php?id=<?= (int)$property["id"] ?>"
                     class="admin-button"
+                    aria-label="Add property images"
+                    title="Add images"
                 >
-                    + ADD IMAGES
+                    <i class="fa fa-picture-o" aria-hidden="true"></i>
+                    <span class="button-label">Add Images</span>
                 </a>
-
-
-                <!-- CANCEL -->
-
-                <a
-                    href="properties.php"
-                    class="cancel-button"
-                >
-                    CANCEL
-                </a>
-
-
             </div>
 
 
@@ -936,7 +867,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 </main>
 
-
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>

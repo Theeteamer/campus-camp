@@ -36,7 +36,7 @@ if ($result) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Admin Dashboard - Campus-Camp®</title>
+    <title>Admin Dashboard</title>
 
     <link rel="stylesheet" href="../css/styles.css?v=<?= filemtime(__DIR__ . '/../css/styles.css') ?>">
 
@@ -58,9 +58,7 @@ if ($result) {
 
             &nbsp; | &nbsp;
 
-            <a href="logout.php">
-                Logout
-            </a>
+            <a href="logout.php">Log out</a>
 
         </div>
 
@@ -75,7 +73,7 @@ if ($result) {
 
         <h1>Dashboard</h1>
 
-        <p>Manage accommodation listings and landlords.</p>
+        <p>These are accommodation listings and landlords currently listed</p>
 
 
         <div class="admin-dashboard-table" aria-label="Dashboard summary">
@@ -91,8 +89,8 @@ if ($result) {
                 </div>
 
                 <div class="admin-dashboard-action">
-                    <a href="properties.php" class="admin-dashboard-button">
-                        Manage Properties
+                    <a href="properties.php" class="admin-dashboard-button" aria-label="Manage properties" title="Manage properties">
+                        <span class="button-label">Manage</span>
                     </a>
                 </div>
 
@@ -109,8 +107,8 @@ if ($result) {
                 </div>
 
                 <div class="admin-dashboard-action">
-                    <a href="landlords.php" class="admin-dashboard-button">
-                        Manage Landlords
+                    <a href="landlords.php" class="admin-dashboard-button" aria-label="Manage landlords" title="Manage landlords">
+                        <span class="button-label">Manage</span>
                     </a>
                 </div>
 
@@ -122,6 +120,8 @@ if ($result) {
 
 </main>
 
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>

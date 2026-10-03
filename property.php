@@ -125,11 +125,14 @@ $whatsapp_message = urlencode(
                 <a
                     href="results.php?location=<?= urlencode($property['location']) ?>&house_type=<?= urlencode($property['house_type']) ?>"
                     class="back-link"
+                    aria-label="Back to search results"
+                    title="Back to search results"
                 >
-                    Back to results
+                    <i class="fa fa-arrow-left" aria-hidden="true"></i>
                 </a>
-                <a href="index.php" class="search-button-link">
-                    New Search
+                <a href="index.php" class="search-button-link" aria-label="Search" title="Search">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                    <span class="button-label">Search</span>
                 </a>
             </div>
 
@@ -138,10 +141,15 @@ $whatsapp_message = urlencode(
 
             <div class="property-page">
 
+                <?php $available_rooms = max(0, (int)($property["available_rooms"] ?? 0)); ?>
+
                 <div class="property-heading">
 
                     <h1>
                         <?= htmlspecialchars($property['name']) ?>
+                        <?php if ($available_rooms === 0): ?>
+                            <span class="rented-out-label" role="status">&middot; Full</span>
+                        <?php endif; ?>
                     </h1>
 
                     <p>
@@ -200,18 +208,8 @@ $whatsapp_message = urlencode(
                         </div>
 
                         <div class="overview-value">
-
-                            <?php if ((int)$property['available_rooms'] > 0): ?>
-
-                                <strong><?= (int)$property['available_rooms'] ?></strong>
-                                room(s) available
-
-                            <?php else: ?>
-
-                                Currently full
-
-                            <?php endif; ?>
-
+                            <strong><?= $available_rooms ?></strong>
+                            <?= $available_rooms === 1 ? 'room' : 'rooms' ?> available
                         </div>
 
                     </div>
@@ -221,7 +219,7 @@ $whatsapp_message = urlencode(
 
                 <!-- FACILITIES -->
 
-                <div class="property-block">
+                <div class="property-block facilities-block">
 
                     <h2>Facilities</h2>
 
@@ -294,7 +292,7 @@ $whatsapp_message = urlencode(
                                 Phone
                             </span>
 
-                            <span>
+                            <span class="contact-phone">
                                 <?= htmlspecialchars($property['landlord_phone']) ?>
                             </span>
 
@@ -321,8 +319,11 @@ $whatsapp_message = urlencode(
                         <a
                             href="tel:<?= htmlspecialchars($phone) ?>"
                             class="call-button"
+                            aria-label="Call landlord"
+                            title="Call landlord"
                         >
-                            Call Landlord
+                            <i class="fa fa-phone" aria-hidden="true"></i>
+                            <span class="button-label">Call</span>
                         </a>
 
 
@@ -331,16 +332,29 @@ $whatsapp_message = urlencode(
                             class="whatsapp-button"
                             target="_blank"
                             rel="noopener"
+                            aria-label="Contact landlord on WhatsApp"
+                            title="Contact landlord on WhatsApp"
                         >
-                            WhatsApp
+                            <i class="fa fa-whatsapp" aria-hidden="true"></i>
+                            <span class="button-label">WhatsApp</span>
                         </a>
 
-                        <a
-    href="property_pictures.php?id=<?= (int)$property["id"] ?>"
-    class="browse-pictures-button"
->
-    Browse Pictures
-</a>
+                        <?php if ($available_rooms > 0): ?>
+                            <a
+                                href="property_pictures.php?id=<?= (int)$property["id"] ?>"
+                                class="browse-pictures-button"
+                                aria-label="View property pictures"
+                                title="View property pictures"
+                            >
+                                <i class="fa fa-picture-o" aria-hidden="true"></i>
+                                <span class="button-label">Pictures</span>
+                            </a>
+                        <?php else: ?>
+                            <span class="browse-pictures-button is-disabled" role="img" aria-label="Property pictures unavailable" title="Property pictures unavailable">
+                                <i class="fa fa-picture-o" aria-hidden="true"></i>
+                                <span class="button-label">Pictures</span>
+                            </span>
+                        <?php endif; ?>
 
                     </div>
 
@@ -366,6 +380,7 @@ $whatsapp_message = urlencode(
 
 </footer>
 
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 
 </html>

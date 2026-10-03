@@ -38,7 +38,7 @@ $result = $conn->query($sql);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Landlords - Campus-Camp®</title>
+    <title>Landlords</title>
 
     <link
         rel="stylesheet"
@@ -59,15 +59,7 @@ $result = $conn->query($sql);
 
         <div>
 
-            <a href="dashboard.php">
-                Dashboard
-            </a>
-
-            &nbsp; | &nbsp;
-
-            <a href="logout.php">
-                Logout
-            </a>
+            <a href="logout.php">Log out</a>
 
         </div>
 
@@ -77,6 +69,15 @@ $result = $conn->query($sql);
 
 <main class="admin-main">
 
+    <div class="admin-content-actions">
+        <div class="container">
+            <a href="dashboard.php" class="cancel-button" aria-label="Back to dashboard" title="Back to dashboard">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span class="button-label">Back</span>
+            </a>
+        </div>
+    </div>
+
     <div class="container">
 
         <div class="admin-page-title">
@@ -84,21 +85,21 @@ $result = $conn->query($sql);
             <div>
 
                 <h1>
-                    Landlords
+                    Owners of listed property.
                 </h1>
 
                 <p>
-                    Manage landlords and contact information.
+                    Manage landlords and contact information. CAUTION: Deletings are irreversible!
                 </p>
 
             </div>
 
-            <a
-                href="add_landlord.php"
-                class="admin-button"
-            >
-                + Add Landlord
-            </a>
+            <div class="admin-page-actions">
+                <a href="add_landlord.php" class="admin-button">
+                    <i class="fa fa-user-plus" aria-hidden="true"></i>
+                    <span class="button-label">Add</span>
+                </a>
+            </div>
 
         </div>
 
@@ -147,7 +148,9 @@ $result = $conn->query($sql);
                             </td>
 
                             <td>
-                                <?= htmlspecialchars($landlord["phone"]) ?>
+                                <span class="contact-phone">
+                                    <?= htmlspecialchars($landlord["phone"]) ?>
+                                </span>
                             </td>
 
                             <td>
@@ -160,13 +163,17 @@ $result = $conn->query($sql);
 
                             <td class="action-links">
 
-                                <a href="edit_landlord.php?id=<?= (int)$landlord["id"] ?>">
-                                    Edit
+                                <a href="edit_landlord.php?id=<?= (int)$landlord["id"] ?>"
+                                   aria-label="Edit landlord"
+                                   title="Edit landlord">
+                                    <i class="fa fa-pencil" aria-hidden="true"></i>
                                 </a>
 
                                 <a href="delete_landlord.php?id=<?= (int)$landlord["id"] ?>"
-                                   onclick="return confirm('Delete this landlord?');">
-                                    Delete
+                                              data-confirm-message="This action cannot be undone. Delete this landlord?"
+                                   aria-label="Delete landlord"
+                                   title="Delete landlord">
+                                    <i class="fa fa-trash" aria-hidden="true"></i>
                                 </a>
 
                             </td>
@@ -193,8 +200,9 @@ $result = $conn->query($sql);
                     Add your first landlord profile.
                 </p>
 
-                <a href="add_landlord.php" class="search-button-link">
-                    Add Landlord
+                <a href="add_landlord.php" class="search-button-link" aria-label="List a property" title="List a property">
+                    <i class="fa fa-home" aria-hidden="true"></i>
+                    <span class="button-label">List Property</span>
                 </a>
 
             </div>
@@ -205,6 +213,8 @@ $result = $conn->query($sql);
 
 </main>
 
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>

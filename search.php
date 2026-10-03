@@ -144,7 +144,7 @@ $stmt->close();
         content="Student accommodation search results."
     >
 
-    <title>Accommodation - Campus-Camp®</title>
+    <title>Accommodation</title>
 
     <link
         rel="stylesheet"
@@ -174,92 +174,6 @@ $stmt->close();
 
 <main>
 
-
-    <!-- SEARCH BAR -->
-
-    <section class="results-search">
-
-        <div class="container">
-
-            <form
-                action="search.php"
-                method="GET"
-                class="results-search-form"
-            >
-
-                <div>
-
-                    <label for="location">
-                        Location
-                    </label>
-
-                    <input
-                        type="text"
-                        name="location"
-                        id="location"
-                        value="<?= htmlspecialchars($location) ?>"
-                        placeholder="Any location"
-                    >
-
-                </div>
-
-
-                <div>
-
-                    <label for="house_type">
-                        House Type
-                    </label>
-
-                    <div class="select-wrap">
-                        <select
-                            name="house_type"
-                            id="house_type"
-                        >
-
-                            <option value="">
-                                Any type
-                            </option>
-
-                        <option value="Single Room"
-                            <?= $house_type === "Single Room" ? "selected" : "" ?>>
-                            Single Room
-                        </option>
-
-                        <option value="Bedsitter"
-                            <?= $house_type === "Bedsitter" ? "selected" : "" ?>>
-                            Bedsitter
-                        </option>
-
-                        <option value="One Bedroom"
-                            <?= $house_type === "One Bedroom" ? "selected" : "" ?>>
-                            One Bedroom
-                        </option>
-
-                        <option value="Two Bedroom"
-                            <?= $house_type === "Two Bedroom" ? "selected" : "" ?>>
-                            Two Bedroom
-                        </option>
-
-                        </select>
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="submit"
-                    class="search-button"
-                >
-                    SEARCH
-                </button>
-
-            </form>
-
-        </div>
-
-    </section>
-
-
     <!-- RESULTS -->
 
     <section class="results-section">
@@ -275,7 +189,7 @@ $stmt->close();
                         Accommodation
                     </h1>
 
-                    <p>
+                    <p class="search-term-banner">
 
                         <?php if ($location !== ""): ?>
 
@@ -308,12 +222,16 @@ $stmt->close();
                         Available Accommodation
                     </h1>
 
-                    <p>
+                    <p class="search-term-banner">
                         All current listings
                     </p>
 
                 <?php endif; ?>
 
+                <a href="index.php" class="search-button-link" aria-label="Search" title="Search">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                    <span class="button-label">Search</span>
+                </a>
             </div>
 
 
@@ -329,26 +247,19 @@ $stmt->close();
                         Try another location or house type.
                     </p>
 
-                    <a
-                        href="index.php"
-                        class="search-button-link"
-                    >
-                        New Search
-                    </a>
-
                 </div>
 
 
             <?php else: ?>
 
 
-                <div class="property-list">
+                <div class="property-list search-property-list">
 
                     <?php foreach ($properties as $property): ?>
 
+                        <?php $available_rooms = max(0, (int)($property["available_rooms"] ?? 0)); ?>
 
                         <article class="property-result">
-
 
                             <div class="property-main">
 
@@ -359,6 +270,9 @@ $stmt->close();
                                         <?= htmlspecialchars(
                                             $property["name"]
                                         ) ?>
+                                        <?php if ($available_rooms === 0): ?>
+                                            <span class="rented-out-label" role="status">&middot; Full</span>
+                                        <?php endif; ?>
                                     </h2>
 
 
@@ -397,23 +311,8 @@ $stmt->close();
 
 
                                     <div class="property-availability">
-
-                                        <?php if (
-                                            (int)$property["available_rooms"] > 0
-                                        ): ?>
-
-                                            <strong><?= (int)$property[
-                                                "available_rooms"
-                                            ] ?></strong>
-
-                                            rooms available
-
-                                        <?php else: ?>
-
-                                            Fully occupied
-
-                                        <?php endif; ?>
-
+                                        <strong><?= $available_rooms ?></strong>
+                                        <?= $available_rooms === 1 ? "room" : "rooms" ?> available
                                     </div>
 
                                 </div>
@@ -423,19 +322,35 @@ $stmt->close();
 
                             <div class="property-action">
 
-                                <a
-                                    href="property.php?id=<?= (int)$property["id"] ?>"
-                                    class="go-button"
-                                >
-                                    GO NOW
-                                </a>
+                                <?php if ($available_rooms > 0): ?>
+                                    <a
+                                        href="property.php?id=<?= (int)$property["id"] ?>"
+                                        class="go-button"
+                                        aria-label="Details for <?= htmlspecialchars($property["name"], ENT_QUOTES, "UTF-8") ?>"
+                                        title="Details"
+                                    >
+                                        <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                        <span class="button-label">Details</span>
+                                    </a>
 
-                                <a
-                                    href="property_pictures.php?id=<?= (int)$property["id"] ?>"
-                                    class="browse-pictures-button"
-                                >
-                                    BROWSE PICTURES
-                                </a>
+                                    <a
+                                        href="property_pictures.php?<?= htmlspecialchars(http_build_query([
+                                            "id" => (int)$property["id"],
+                                            "return_to" => "search",
+                                            "return_location" => $location,
+                                            "return_house_type" => $house_type
+                                        ]), ENT_QUOTES, "UTF-8") ?>"
+                                        class="browse-pictures-button"
+                                        aria-label="View pictures of <?= htmlspecialchars($property["name"], ENT_QUOTES, "UTF-8") ?>"
+                                        title="View pictures"
+                                    >
+                                        <i class="fa fa-picture-o" aria-hidden="true"></i>
+                                        <span class="button-label">Pictures</span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="go-button is-disabled" role="img" aria-label="Details unavailable" title="Details unavailable"><i class="fa fa-info-circle" aria-hidden="true"></i><span class="button-label">Details</span></span>
+                                    <span class="browse-pictures-button is-disabled" role="img" aria-label="Pictures unavailable" title="Pictures unavailable"><i class="fa fa-picture-o" aria-hidden="true"></i><span class="button-label">Pictures</span></span>
+                                <?php endif; ?>
 
                             </div>
 
@@ -470,7 +385,80 @@ $stmt->close();
 
 </footer>
 
+<script>
+const locationSelect = document.getElementById("location");
+const houseTypeSelect = document.getElementById("house_type");
+const allHouseTypes = <?= json_encode(
+    $house_types,
+    JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+) ?>;
+const selectedHouseType = <?= json_encode(
+    $house_type,
+    JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+) ?>;
 
+function setHouseTypeOptions(types, selectedType) {
+    houseTypeSelect.innerHTML = "";
+
+    const anyOption = document.createElement("option");
+    anyOption.value = "";
+    anyOption.textContent = "Any type";
+    houseTypeSelect.appendChild(anyOption);
+
+    types.forEach(function (type) {
+        const option = document.createElement("option");
+        option.value = type;
+        option.textContent = type;
+        houseTypeSelect.appendChild(option);
+    });
+
+    if (types.includes(selectedType)) {
+        houseTypeSelect.value = selectedType;
+    }
+}
+
+function loadHouseTypes(location, selectedType) {
+    if (location === "") {
+        setHouseTypeOptions(allHouseTypes, selectedType);
+        return;
+    }
+
+    houseTypeSelect.innerHTML = "";
+    const loadingOption = document.createElement("option");
+    loadingOption.value = "";
+    loadingOption.textContent = "Loading...";
+    loadingOption.disabled = true;
+    houseTypeSelect.appendChild(loadingOption);
+
+    fetch("get_house_types.php?location=" + encodeURIComponent(location))
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error("Network response was not OK");
+            }
+            return response.json();
+        })
+        .then(function (types) {
+            setHouseTypeOptions(types, selectedType);
+        })
+        .catch(function (error) {
+            console.error("House type loading error:", error);
+            houseTypeSelect.innerHTML = "";
+            const errorOption = document.createElement("option");
+            errorOption.value = "";
+            errorOption.textContent = "Unable to load types";
+            errorOption.disabled = true;
+            houseTypeSelect.appendChild(errorOption);
+        });
+}
+
+locationSelect.addEventListener("change", function () {
+    loadHouseTypes(this.value, "");
+});
+
+loadHouseTypes(locationSelect.value, selectedHouseType);
+</script>
+
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 
 </html>

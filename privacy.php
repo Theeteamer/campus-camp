@@ -13,7 +13,7 @@
     >
 
     <title>
-        Privacy Policy - Campus-CampÂ®
+        Privacy Policy
     </title>
 
     <link
@@ -47,8 +47,8 @@
     <div class="container legal-container">
 
         <div class="legal-topbar">
-            <a href="javascript:history.back()" class="legal-return">
-                RETURN
+            <a href="javascript:history.back()" class="legal-return" aria-label="Back" title="Back">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
             </a>
         </div>
 
@@ -57,7 +57,7 @@
         </h1>
 
         <p class="legal-updated">
-            Last updated: 1 October 2026
+            August 2026
         </p>
 
         <p class="legal-branding">
@@ -337,7 +337,7 @@
         </div>
 
         <p>
-            &middot; All rights reserved. 
+            &middot;  All rights reserved. 
         </p>
 
     </div>
@@ -345,5 +345,6 @@
 </footer>
 
 
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 </html>

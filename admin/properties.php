@@ -9,13 +9,65 @@ if (!isset($_SESSION["admin_id"])) {
     exit;
 }
 
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $property_id = (int)($_POST["property_id"] ?? 0);
+    $change = (int)($_POST["change"] ?? 0);
 
-/*
-|--------------------------------------------------------------------------
-| Get all properties
-|--------------------------------------------------------------------------
-*/
+    if ($property_id <= 0 || !in_array($change, [-1, 1], true)) {
+        http_response_code(400);
+        exit("Invalid availability update.");
+    }
 
+    $conn->begin_transaction();
+
+    try {
+        $stmt = $conn->prepare("SELECT house_type FROM properties WHERE id = ? FOR UPDATE");
+        $stmt->bind_param("i", $property_id);
+        $stmt->execute();
+        $property_row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$property_row) {
+            throw new RuntimeException("Property not found.");
+        }
+
+        $stmt = $conn->prepare("SELECT available_rooms FROM rooms WHERE property_id = ? FOR UPDATE");
+        $stmt->bind_param("i", $property_id);
+        $stmt->execute();
+        $room_row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        $current_count = max(0, (int)($room_row["available_rooms"] ?? 0));
+        $new_count = max(0, $current_count + $change);
+        $status = $new_count > 0 ? "Available" : "Full";
+
+        if ($room_row) {
+            $stmt = $conn->prepare("UPDATE rooms SET available_rooms = ?, status = ? WHERE property_id = ?");
+            $stmt->bind_param("isi", $new_count, $status, $property_id);
+        } elseif ($new_count > 0) {
+            $stmt = $conn->prepare("INSERT INTO rooms (property_id, room_type, available_rooms, status) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("isis", $property_id, $property_row["house_type"], $new_count, $status);
+        }
+
+        if (isset($stmt)) {
+            if (!$stmt->execute()) {
+                throw new RuntimeException("Unable to update room availability.");
+            }
+            $stmt->close();
+        }
+
+        $conn->commit();
+    } catch (Throwable $exception) {
+        $conn->rollback();
+        $_SESSION["properties_error"] = "Unable to update room availability.";
+    }
+
+    header("Location: properties.php");
+    exit;
+}
+
+$availability_error = $_SESSION["properties_error"] ?? "";
+unset($_SESSION["properties_error"]);
 $sql = "
     SELECT
         p.id,
@@ -55,7 +107,7 @@ $result = $conn->query($sql);
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Properties - Campus-Camp®</title>
+    <title>Properties</title>
 
     <link
         rel="stylesheet"
@@ -66,11 +118,6 @@ $result = $conn->query($sql);
 
 
 <body>
-
-
-<!-- =========================================================
-     ADMIN HEADER
-     ========================================================= -->
 
 <header class="admin-header">
 
@@ -83,33 +130,25 @@ $result = $conn->query($sql);
 
         <div>
 
-            <a href="dashboard.php">
-                Dashboard
-            </a>
-
-            &nbsp; | &nbsp;
-
-            <a href="logout.php">
-                Logout
-            </a>
+            <a href="logout.php">Log out</a>
 
         </div>
 
     </div>
 
 </header>
-
-
-<!-- =========================================================
-     MAIN CONTENT
-     ========================================================= -->
-
 <main class="admin-main">
 
+    <div class="admin-content-actions">
+        <div class="container">
+            <a href="dashboard.php" class="cancel-button" aria-label="Back to dashboard" title="Back to dashboard">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span class="button-label">Back</span>
+            </a>
+        </div>
+    </div>
+
     <div class="container">
-
-
-        <!-- PAGE TITLE -->
 
         <div class="admin-page-title">
 
@@ -120,31 +159,32 @@ $result = $conn->query($sql);
                 </h1>
 
                 <p>
-                    Manage accommodation listings.
+                    Management accommodation listings. CAUTION: Deleting a property is irreversible!
                 </p>
 
             </div>
 
 
-            <a
-                href="add_property.php"
-                class="admin-button"
-            >
-                + Add Property
-            </a>
+            <div class="admin-page-actions">
+                <a href="add_property.php" class="admin-button">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                    <span class="button-label">List Property</span>
+                </a>
+            </div>
 
         </div>
 
-
-        <!-- =================================================
-             PROPERTY TABLE
-             ================================================= -->
+        <?php if ($availability_error !== ""): ?>
+            <div class="error-message admin-error">
+                <?= htmlspecialchars($availability_error) ?>
+            </div>
+        <?php endif; ?>
 
         <?php if ($result && $result->num_rows > 0): ?>
 
             <div class="admin-table-container">
 
-                <table class="admin-table">
+                <table class="admin-table properties-admin-table">
 
 
                     <thead>
@@ -193,8 +233,6 @@ $result = $conn->query($sql);
                         <tr>
 
 
-                            <!-- PROPERTY -->
-
                             <td>
 
                                 <?= htmlspecialchars(
@@ -203,8 +241,6 @@ $result = $conn->query($sql);
 
                             </td>
 
-
-                            <!-- LOCATION -->
 
                             <td>
 
@@ -215,8 +251,6 @@ $result = $conn->query($sql);
                             </td>
 
 
-                            <!-- HOUSE TYPE -->
-
                             <td>
 
                                 <?= htmlspecialchars(
@@ -226,64 +260,57 @@ $result = $conn->query($sql);
                             </td>
 
 
-                            <!-- PRICE -->
-
                             <td>
 
                                 KSh
 
-                                <?= number_format(
-                                    $property["price"],
-                                    0
-                                ) ?>
+                                <?= number_format($property["price"], 0) ?>
 
                                 /
 
-                                <?= htmlspecialchars(
-                                    $property["payment_period"]
-                                ) ?>
+                                <?= htmlspecialchars($property["payment_period"]) ?>
 
                             </td>
 
 
-                            <!-- AVAILABILITY -->
 
                             <td>
 
-                                <?php
+                                <?php $available = (int)$property["available_rooms"]; ?>
 
-                                $available =
-                                    (int)$property[
-                                        "available_rooms"
-                                    ];
+                                <div class="availability-control">
+                                    <form method="POST" class="availability-change-form">
+                                        <input type="hidden" name="property_id" value="<?= (int)$property["id"] ?>">
+                                        <input type="hidden" name="change" value="-1">
+                                        <button
+                                            type="submit"
+                                            class="availability-adjust"
+                                            aria-label="Reduce available rooms"
+                                            title="Reduce available rooms"
+                                            <?= $available <= 0 ? "disabled" : "" ?>
+                                        ><i class="fa fa-minus" aria-hidden="true"></i></button>
+                                    </form>
 
-                                ?>
+                                    <?php if ($available > 0): ?>
+                                        <span class="status-available"><?= $available ?> available</span>
+                                    <?php else: ?>
+                                        <span class="status-rented-out" role="status">Full</span>
+                                    <?php endif; ?>
 
-
-                                <?php if ($available > 0): ?>
-
-                                    <span class="status-available">
-
-                                        <?= $available ?>
-
-                                        available
-
-                                    </span>
-
-                                <?php else: ?>
-
-                                    <span class="status-full">
-
-                                        Full
-
-                                    </span>
-
-                                <?php endif; ?>
+                                    <form method="POST" class="availability-change-form">
+                                        <input type="hidden" name="property_id" value="<?= (int)$property["id"] ?>">
+                                        <input type="hidden" name="change" value="1">
+                                        <button
+                                            type="submit"
+                                            class="availability-adjust"
+                                            aria-label="Add available room"
+                                            title="Add available room"
+                                        ><i class="fa fa-plus" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
 
                             </td>
 
-
-                            <!-- LANDLORD -->
 
                             <td>
 
@@ -293,24 +320,25 @@ $result = $conn->query($sql);
 
                             </td>
 
-
-                            <!-- ACTIONS -->
-
                             <td class="action-links">
 
 
                                 <a
                                     href="edit_property.php?id=<?= (int)$property["id"] ?>"
+                                    aria-label="Edit property"
+                                    title="Edit property"
                                 >
-                                    Edit
+                                    <i class="fa fa-pencil" aria-hidden="true"></i>
                                 </a>
 
 
                                 <a
                                     href="delete_property.php?id=<?= (int)$property["id"] ?>"
-                                    onclick="return confirm('Delete this property? This will also remove its rooms and facilities.');"
+                                    data-confirm-message="Deleting this property also removes its rooms and facilities. This action cannot be undone. Continue?"
+                                    aria-label="Delete property"
+                                    title="Delete property"
                                 >
-                                    Delete
+                                    <i class="fa fa-trash" aria-hidden="true"></i>
                                 </a>
 
 
@@ -333,10 +361,6 @@ $result = $conn->query($sql);
         <?php else: ?>
 
 
-            <!-- =================================================
-                 NO PROPERTIES
-                 ================================================= -->
-
             <div class="no-results">
 
                 <h2>
@@ -351,8 +375,11 @@ $result = $conn->query($sql);
                 <a
                     href="add_property.php"
                     class="search-button-link"
+                    aria-label="Add property"
+                    title="Add property"
                 >
-                    Add Property
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                    <span class="button-label">Add Property</span>
                 </a>
 
             </div>
@@ -365,7 +392,8 @@ $result = $conn->query($sql);
 
 </main>
 
-
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>

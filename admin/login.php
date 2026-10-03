@@ -4,7 +4,7 @@ session_start();
 
 require_once __DIR__ . "/../config/database.php";
 
-$error = "";
+$login_failed = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     } else {
 
-        $error = "Invalid username or password.";
+        $login_failed = true;
 
     }
 }
@@ -48,29 +48,46 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Admin Login - Campus-Camp®</title>
+    <title>Verify</title>
 
     <link rel="stylesheet" href="../css/styles.css?v=<?= filemtime(__DIR__ . '/../css/styles.css') ?>">
+
+    <style>
+        .admin-login-form input[aria-invalid="true"] {
+            border: 1px solid #b42318;
+        }
+    </style>
 
 </head>
 
 <body>
 
-<div class="admin-login">
+<header class="admin-header">
+    <div class="container admin-header-inner">
+        <strong>
+            <img class="brand-image" src="../images/ofcampus-logo.png" alt="Campus-Camp®">
+            <span class="admin-context">Admin</span>
+        </strong>
+    </div>
+</header>
+
+<main class="admin-main admin-login">
+
+    <div class="admin-content-actions">
+        <div class="container">
+            <a href="../index.php" class="cancel-button" aria-label="Back to home" title="Back to home">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span class="button-label">Home</span>
+            </a>
+        </div>
+    </div>
 
     <div class="admin-login-box">
+        <div class="admin-login-content">
 
-        <h1><img class="brand-image" src="../images/ofcampus-logo.png" alt="Campus-Camp®"></h1>
+        <h1>Log In</h1>
 
-        <p>Administrator Login</p>
-
-        <?php if ($error): ?>
-
-            <div class="error-message">
-                <?= htmlspecialchars($error) ?>
-            </div>
-
-        <?php endif; ?>
+        <p>Verify you are an administrator...</p>
 
         <form method="POST" class="admin-login-form">
 
@@ -80,6 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 type="text"
                 name="username"
                 required
+                <?= $login_failed ? 'aria-invalid="true"' : "" ?>
             >
 
             <label>Password</label>
@@ -88,24 +106,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 type="password"
                 name="password"
                 required
+                <?= $login_failed ? 'aria-invalid="true"' : "" ?>
             >
 
-            <button type="submit" class="admin-login-button">
-                LOGIN
+            <button type="submit" class="admin-login-button" aria-label="Log in" title="Log in">
+                <i class="fa fa-sign-in" aria-hidden="true"></i>
+                <span class="button-label">Log In</span>
             </button>
 
         </form>
 
-        <div class="admin-login-link-wrap">
-            <a href="../index.php" class="admin-login-link">
-                Back to website
-            </a>
         </div>
-
     </div>
 
-</div>
+</main>
 
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>

@@ -16,24 +16,14 @@ if ($location !== '' && $house_type !== '') {
             p.house_type,
             p.price,
             p.payment_period,
-            p.deposit,
-            p.description,
-            r.available_rooms,
-            f.water,
-            f.electricity,
-            f.wifi,
-            f.security
+            r.available_rooms
         FROM properties p
 
         LEFT JOIN rooms r
             ON p.id = r.property_id
 
-        LEFT JOIN facilities f
-            ON p.id = f.property_id
-
         WHERE p.location = ?
         AND p.house_type = ?
-        AND r.available_rooms > 0
 
         ORDER BY p.price ASC
     ";
@@ -61,7 +51,9 @@ if ($location !== '' && $house_type !== '') {
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Accommodation Results - Campus-Camp®</title>
+    <meta name="description" content="Student accommodation search results.">
+
+    <title>Accommodation </title>
 
     <link rel="stylesheet" href="css/styles.css?v=<?= filemtime(__DIR__ . '/css/styles.css') ?>">
 
@@ -71,9 +63,9 @@ if ($location !== '' && $house_type !== '') {
 
 <header class="site-header">
 
-    <div class="container header-inner">
+    <div class="container site-header-inner">
 
-        <a href="index.php" class="logo">
+        <a href="index.php" class="site-logo">
             <img class="brand-image" src="images/ofcampus-logo.png" alt="Campus-Camp®">
         </a>
 
@@ -88,24 +80,17 @@ if ($location !== '' && $house_type !== '') {
 
         <div class="container">
 
-            <div class="results-header">
+            <div class="results-heading">
+                <h1>Accommodation</h1>
 
-                <div>
+                <p class="search-term-banner">
+                    <?= htmlspecialchars($location) ?> · <?= htmlspecialchars($house_type) ?>
+                </p>
 
-                    <h1>Accommodation Results</h1>
-
-                    <p>
-                        <?= htmlspecialchars($location) ?>
-                        —
-                        <?= htmlspecialchars($house_type) ?>
-                    </p>
-
-                </div>
-
-                <a href="index.php" class="back-button">
-                    New Search
+                <a href="index.php" class="search-button-link" aria-label="Search" title="Search">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                    <span class="button-label">Search</span>
                 </a>
-
             </div>
 
 
@@ -116,110 +101,86 @@ if ($location !== '' && $house_type !== '') {
                     <h2>No accommodation found</h2>
 
                     <p>
-                        There are currently no available
-                        <?= htmlspecialchars($house_type) ?>
-                        rooms in
-                        <?= htmlspecialchars($location) ?>.
+                        Try another location or house type.
                     </p>
-
-                    <a href="index.php" class="search-button-link">
-                        Try Another Search
-                    </a>
 
                 </div>
 
             <?php else: ?>
 
-                <p class="result-count">
-                    <strong><?= count($properties) ?></strong> accommodation option(s) found
-                </p>
-
-
-                <div class="property-list">
+                <div class="property-list search-property-list">
 
                     <?php foreach ($properties as $property): ?>
 
-                        <article class="property-card">
+                        <?php $available_rooms = max(0, (int)($property["available_rooms"] ?? 0)); ?>
+
+                        <article class="property-result">
 
                             <div class="property-main">
 
-                                <h2>
-                                    <?= htmlspecialchars($property['name']) ?>
-                                </h2>
+                                <div class="property-information">
+                                    <h2>
+                                        <?= htmlspecialchars($property["name"]) ?>
+                                        <?php if ($available_rooms === 0): ?>
+                                            <span class="rented-out-label" role="status">&middot; Full</span>
+                                        <?php endif; ?>
+                                    </h2>
 
-                                <div class="property-info">
+                                    <div class="property-location">
+                                        <?= htmlspecialchars($property["location"]) ?>
+                                    </div>
 
-                                    <span>
-                                        <?= htmlspecialchars($property['location']) ?>
-                                    </span>
+                                    <div class="property-type">
+                                        <?= htmlspecialchars($property["house_type"]) ?>
+                                    </div>
 
-                                    <span>
-                                        <?= htmlspecialchars($property['house_type']) ?>
-                                    </span>
+                                    <div class="property-price">
+                                        KSh
+                                        <strong><?= number_format($property["price"], 0) ?></strong>
+                                        <span>
+                                            / <?= htmlspecialchars($property["payment_period"]) ?>
+                                        </span>
+                                    </div>
 
-                                    <span>
-                                        KSh <strong><?= number_format($property['price'], 0) ?></strong>
-                                        /
-                                        <?= htmlspecialchars($property['payment_period']) ?>
-                                    </span>
-
+                                    <div class="property-availability">
+                                        <strong><?= $available_rooms ?></strong>
+                                        <?= $available_rooms === 1 ? "room" : "rooms" ?> available
+                                    </div>
                                 </div>
-
-
-                                <div class="property-details">
-
-                                    <span>
-                                        <strong><?= (int)$property['available_rooms'] ?></strong>
-                                        room(s) available
-                                    </span>
-
-                                    <span>
-                                        <?= $property['water'] ? 'Water' : 'No Water' ?>
-                                    </span>
-
-                                    <span>
-                                        <?= $property['electricity'] ? 'Electricity' : 'No Electricity' ?>
-                                    </span>
-
-                                    <span>
-                                        <?= $property['wifi'] ? 'Wi-Fi' : 'No Wi-Fi' ?>
-                                    </span>
-
-                                    <span>
-                                        <?= $property['security'] ? 'Security' : 'No Security' ?>
-                                    </span>
-
-                                </div>
-
-
-                                <?php if (!empty($property['description'])): ?>
-
-                                    <p class="property-description">
-
-                                        <?= htmlspecialchars($property['description']) ?>
-
-                                    </p>
-
-                                <?php endif; ?>
-
                             </div>
 
 
                             <div class="property-action">
 
-                                <a
-                                    href="property.php?id=<?= (int)$property['id'] ?>"
-                                    class="go-button"
-                                >
-                                    GO NOW
-                                </a>
+                                <?php if ($available_rooms > 0): ?>
+                                    <a
+                                        href="property.php?id=<?= (int)$property["id"] ?>"
+                                        class="go-button"
+                                        aria-label="Details for <?= htmlspecialchars($property["name"], ENT_QUOTES, "UTF-8") ?>"
+                                        title="Details"
+                                    >
+                                        <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                        <span class="button-label">Details</span>
+                                    </a>
 
-                                <a
-                                    href="property_pictures.php?id=<?= (int)$property['id'] ?>"
-                                    class="browse-pictures-button"
-                                >
-                                    BROWSE PICTURES
-                                </a>
+                                    <a
+                                        href="property_pictures.php?<?= htmlspecialchars(http_build_query([
+                                            "id" => (int)$property["id"],
+                                            "return_to" => "results",
+                                            "return_location" => $location,
+                                            "return_house_type" => $house_type
+                                        ]), ENT_QUOTES, "UTF-8") ?>"
+                                        class="browse-pictures-button"
+                                        aria-label="View pictures of <?= htmlspecialchars($property["name"], ENT_QUOTES, "UTF-8") ?>"
+                                        title="View pictures"
+                                    >
+                                        <i class="fa fa-picture-o" aria-hidden="true"></i>
+                                        <span class="button-label">Pictures</span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="go-button is-disabled" role="img" aria-label="Details unavailable" title="Details unavailable"><i class="fa fa-info-circle" aria-hidden="true"></i><span class="button-label">Details</span></span>
+                                    <span class="browse-pictures-button is-disabled" role="img" aria-label="Pictures unavailable" title="Pictures unavailable"><i class="fa fa-picture-o" aria-hidden="true"></i><span class="button-label">Pictures</span></span>
+                                <?php endif; ?>
 
                             </div>
 
@@ -249,6 +210,7 @@ if ($location !== '' && $house_type !== '') {
 
 </footer>
 
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 
 </html>

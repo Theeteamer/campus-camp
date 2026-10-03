@@ -18,12 +18,6 @@ if ($property_id <= 0) {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Get property
-|--------------------------------------------------------------------------
-*/
-
 $stmt = $conn->prepare("
     SELECT
         id,
@@ -54,12 +48,6 @@ if (!$property) {
 $message = "";
 $error = "";
 
-
-/*
-|--------------------------------------------------------------------------
-| Upload images
-|--------------------------------------------------------------------------
-*/
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -209,13 +197,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| Delete image
-|--------------------------------------------------------------------------
-*/
-
 if (
     isset($_GET["delete"])
 ) {
@@ -296,14 +277,6 @@ if (
     }
 
 }
-
-
-/*
-|--------------------------------------------------------------------------
-| Get images
-|--------------------------------------------------------------------------
-*/
-
 $stmt = $conn->prepare("
     SELECT
         id,
@@ -372,31 +345,23 @@ $stmt->close();
         </strong>
 
         <div>
-
-            <a href="dashboard.php">
-                Dashboard
-            </a>
-
-            &nbsp; | &nbsp;
-
-            <a href="properties.php">
-                Properties
-            </a>
-
-            &nbsp; | &nbsp;
-
-            <a href="logout.php">
-                Logout
-            </a>
-
+            <a href="logout.php">Log out</a>
         </div>
 
     </div>
 
 </header>
 
-
 <main class="admin-main">
+
+    <div class="admin-content-actions">
+        <div class="container">
+            <a href="edit_property.php?id=<?= $property_id ?>" class="cancel-button" aria-label="Back to property" title="Back to property">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span class="button-label">Back</span>
+            </a>
+        </div>
+    </div>
 
     <div class="container">
 
@@ -406,7 +371,7 @@ $stmt->close();
             <div>
 
                 <h1>
-                    Property Images
+                    These are the Images by the Accommodation Owner for this property.
                 </h1>
 
                 <p>
@@ -456,10 +421,10 @@ $stmt->close();
             class="admin-form admin-image-form"
         >
 
-            <div class="form-section">
+            <div class="form-section form-section-divider">
 
                 <h2>
-                    Add Images
+                    Upload New Images
                 </h2>
 
                 <label for="images">
@@ -473,14 +438,18 @@ $stmt->close();
                     accept="image/jpeg,image/png,image/webp"
                     multiple
                     class="admin-file-input"
+                    required
                 >
 
                 <div class="form-actions">
                     <button
                         type="submit"
                         class="admin-button"
+                        aria-label="Upload images"
+                        title="Upload images"
                     >
-                        Upload Images
+                        <i class="fa fa-upload" aria-hidden="true"></i>
+                        <span class="button-label">Upload Images</span>
                     </button>
                 </div>
 
@@ -512,10 +481,12 @@ $stmt->close();
 
                             <a
                                 href="property_images.php?id=<?= $property_id ?>&delete=<?= (int)$image["id"] ?>"
-                                onclick="return confirm('Delete this picture?');"
+                                data-confirm-message="This action cannot be undone. Delete this picture?"
                                 class="delete-image-link"
+                                aria-label="Delete image"
+                                title="Delete image"
                             >
-                                Delete
+                                <i class="fa fa-trash" aria-hidden="true"></i>
                             </a>
 
                         </div>
@@ -539,22 +510,12 @@ $stmt->close();
 
         <?php endif; ?>
 
-
-        <div class="form-actions property-images-return">
-            <a
-                href="edit_property.php?id=<?= $property_id ?>"
-                class="admin-button"
-            >
-                ← Return to Property
-            </a>
-        </div>
-
-
     </div>
 
 </main>
 
-
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>

@@ -13,7 +13,7 @@
     >
 
     <title>
-        Terms & Conditions - Campus-CampÂ®
+        Terms & Conditions
     </title>
 
     <link
@@ -47,8 +47,8 @@
     <div class="container legal-container">
 
         <div class="legal-topbar">
-            <a href="javascript:history.back()" class="legal-return">
-                RETURN
+            <a href="javascript:history.back()" class="legal-return" aria-label="Back" title="Back">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
             </a>
         </div>
 
@@ -57,14 +57,14 @@
         </h1>
 
         <p class="legal-updated">
-            Last updated: 1 October 2026
+            August 2026
         </p>
 
         <p class="legal-branding">
             <span class="brand-word">Campus-Camp</span><span class="brand-reg">®</span>
         </p>
 
-        <h2>1. About <span class="brand-word">Campus-Camp</span><span class="brand-reg">®</span></h2>
+        <h2>1. About Campus-Camp</h2>
 
         <p>
             <span class="brand-word">Campus-Camp</span><span class="brand-reg">®</span> is an accommodation listing platform designed
@@ -349,5 +349,6 @@
 </footer>
 
 
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 </html>

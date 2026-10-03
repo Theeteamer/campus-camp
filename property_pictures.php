@@ -3,18 +3,14 @@
 require_once __DIR__ . "/config/database.php";
 
 $property_id = (int)($_GET["id"] ?? 0);
+$return_to = $_GET["return_to"] ?? "";
+$return_location = $_GET["return_location"] ?? "";
+$return_house_type = $_GET["return_house_type"] ?? "";
 
 if ($property_id <= 0) {
     header("Location: index.php");
     exit;
 }
-
-
-/*
-|--------------------------------------------------------------------------
-| Get property
-|--------------------------------------------------------------------------
-*/
 
 $stmt = $conn->prepare("
     SELECT
@@ -43,12 +39,25 @@ if (!$property) {
     exit;
 }
 
+$return_url = "property.php?id=" . $property_id;
 
-/*
-|--------------------------------------------------------------------------
-| Get pictures
-|--------------------------------------------------------------------------
-*/
+if (
+    is_string($return_to) &&
+    is_string($return_location) &&
+    is_string($return_house_type)
+) {
+    if ($return_to === "search") {
+        $return_url = "search.php?" . http_build_query([
+            "location" => $return_location,
+            "house_type" => $return_house_type
+        ]);
+    } elseif ($return_to === "results") {
+        $return_url = "results.php?" . http_build_query([
+            "location" => $return_location,
+            "house_type" => $return_house_type
+        ]);
+    }
+}
 
 $stmt = $conn->prepare("
     SELECT
@@ -92,6 +101,8 @@ $stmt->close();
         Pictures - <?= htmlspecialchars($property["name"]) ?>
     </title>
 
+    <link rel="stylesheet" href="css/styles.css?v=<?= filemtime(__DIR__ . '/css/styles.css') ?>">
+
     <style>
 
         * {
@@ -100,99 +111,55 @@ $stmt->close();
 
         html,
         body {
-            width: 100%;
-            height: 100%;
+            min-height: 100%;
             margin: 0;
         }
 
         body {
-            background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            min-height: 100vh;
+            margin-inline: auto;
+            overflow: auto;
+            background: var(--surface);
+            color: var(--ink);
+            font-family: "Lato", Arial, sans-serif;
+        }
+
+
+        .gallery-page {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            min-height: 0;
+            background: #ffffff;
         }
 
 
         .gallery {
 
-            width: 100%;
-            height: 100vh;
+            width: min(800px, 100%);
+            height: auto;
+            max-height: 600px;
+            flex: 1 1 600px;
+            min-height: 0;
+            margin: 0 auto;
 
             display: flex;
             flex-direction: column;
+            background: #ffffff;
 
         }
 
 
-        .gallery-header {
-
-            height: 60px;
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            padding: 0 25px;
-
-            background: #111;
-
-        }
-
-
-        .gallery-title {
-
-            font-size: 16px;
-            font-weight: bold;
-
-        }
-
-
-        .gallery-location {
-
-            margin-top: 3px;
-
-            color: #aaa;
-
-            font-size: 12px;
-
-        }
-
-
-        .return-button {
-
-            display: inline-flex;
-            min-height: 34px;
-            align-items: center;
-            justify-content: center;
-            padding: 7px 12px;
-
-            border: 1px solid #1d4d3b;
-
-            background: #d9f1d5;
-
-            color: #1d4d3b;
-
-            text-decoration: none;
-
-            font-family: "Lato", Arial, sans-serif;
-            font-size: 14px;
-
-            font-weight: 800;
-
-            line-height: 1;
-
-            transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
-
-        }
-
-
-        .return-button:hover,
-        .return-button:focus-visible {
-
-            background: #1d4d3b;
-
-            color: #ffffff;
-
+        .gallery-return {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 1;
+            margin-bottom: 0;
         }
 
 
@@ -201,36 +168,39 @@ $stmt->close();
             position: relative;
 
             flex: 1;
+            min-height: 0;
 
-            display: flex;
-
+            display: grid;
+            grid-template-columns: minmax(38px, 1fr) minmax(0, auto) minmax(38px, 1fr);
+            grid-template-rows: minmax(0, 1fr);
             align-items: center;
-
-            justify-content: center;
+            justify-items: center;
+            column-gap: 8px;
 
             overflow: hidden;
 
-            padding: 28px 80px 40px;
+            padding: 16px;
+            background: #ffffff;
 
         }
 
 
         .gallery-image {
 
-            width: 100%;
+            grid-column: 2;
+            grid-row: 1;
+            min-width: 0;
+            min-height: 0;
+            width: auto;
+            height: auto;
             max-width: 100%;
-            height: 100%;
             max-height: 100%;
 
             object-fit: contain;
 
             opacity: 1;
 
-            border-radius: 22px;
-
-            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
-
-            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
 
         }
 
@@ -281,30 +251,25 @@ $stmt->close();
 
         .gallery-button {
 
-            position: absolute;
-
-            top: 50%;
-
-            transform: translateY(-50%);
-
-            width: 48px;
-
-            height: 48px;
+            grid-row: 1;
+            width: 38px;
+            height: 34px;
+            min-height: 34px;
+            padding: 0;
 
             border: 1px solid #1d4d3b;
-            border-radius: 50%;
+            border-radius: 0;
 
             background: #d9f1d5;
 
-            color: #1d4d3b;
+            color: #000000;
 
-            font-size: 30px;
+            font-size: 22px;
+            font-weight: 800;
 
             line-height: 1;
 
             cursor: pointer;
-
-            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
 
             transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
 
@@ -315,58 +280,70 @@ $stmt->close();
         }
 
 
+        .gallery-button.previous {
+            grid-column: 1;
+            justify-self: end;
+        }
+
+
+        .gallery-button.next {
+            grid-column: 3;
+            justify-self: start;
+        }
+
+
         .gallery-button:hover,
-        .gallery-button:focus-visible {
+        .gallery-button:focus-visible,
+        .gallery-button:active {
 
             border-color: #1d4d3b;
-            background: #1d4d3b;
-            color: #ffffff;
+            background: #add8e6;
+            color: #000000;
 
         }
 
 
-        .previous {
+        .gallery-controls {
 
-            left: 22px;
+            position: relative;
+            min-height: 54px;
 
-        }
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
 
+            padding: 8px 20px;
 
-        .next {
-
-            right: 22px;
+            color: #000000;
+            background: #f5f5f5;
+            border-top: 1px solid #d7d7d7;
 
         }
 
 
         .gallery-counter {
 
-            position: absolute;
-
-            bottom: 20px;
-
-            left: 50%;
-
-            transform: translateX(-50%);
-
-            padding: 7px 12px;
-
-            background: rgba(0, 0, 0, 0.65);
-
-            font-size: 12px;
+            min-width: 46px;
+            color: #000000;
+            font-size: 14px;
+            font-weight: 800;
+            text-align: center;
 
         }
 
 
         .no-images {
 
+            grid-column: 1 / -1;
+            grid-row: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            color: #aaa;
-            min-height: 220px;
+            color: #555555;
+            min-height: 0;
             max-width: 540px;
             padding: 24px;
 
@@ -379,7 +356,7 @@ $stmt->close();
 
             margin-bottom: 8px;
 
-            color: #fff;
+            color: #000000;
 
             font-size: 20px;
 
@@ -392,50 +369,30 @@ $stmt->close();
 
 <body>
 
+<header class="site-header">
+    <div class="container site-header-inner">
+        <a href="index.php" class="site-logo">
+            <img class="brand-image" src="images/ofcampus-logo.png" alt="Campus-Camp&reg;">
+        </a>
+    </div>
+</header>
+
+<main class="gallery-page">
 
 <div class="gallery">
 
-
-    <!-- HEADER -->
-
-    <header class="gallery-header">
-
-        <div>
-
-            <div class="gallery-title">
-
-                <?= htmlspecialchars($property["name"]) ?>
-
-            </div>
-
-            <div class="gallery-location">
-
-                <?= htmlspecialchars($property["location"]) ?>
-
-                ·
-
-                <?= htmlspecialchars($property["house_type"]) ?>
-
-            </div>
-
-        </div>
-
-
-        <a
-            href="property.php?id=<?= $property_id ?>"
-            class="return-button"
-        >
-            RETURN
-        </a>
-
-    </header>
-
-
-
     <!-- GALLERY -->
 
-    <main class="gallery-main">
+    <section class="gallery-main" aria-label="Property photo viewer">
 
+        <a
+            href="<?= htmlspecialchars($return_url, ENT_QUOTES, "UTF-8") ?>"
+            class="back-link gallery-return"
+            aria-label="Return to listing"
+            title="Return to listing"
+        >
+            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+        </a>
 
         <?php if (empty($images)): ?>
 
@@ -459,51 +416,52 @@ $stmt->close();
                 alt="<?= htmlspecialchars($property["name"]) ?>"
             >
 
-
             <?php if (count($images) > 1): ?>
-
-
                 <button
                     type="button"
                     class="gallery-button previous"
+                    aria-label="Previous picture"
+                    title="Previous picture"
                     onclick="previousImage()"
-                >
-                    ‹
-                </button>
-
+                ><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
 
                 <button
                     type="button"
                     class="gallery-button next"
+                    aria-label="Next picture"
+                    title="Next picture"
                     onclick="nextImage()"
-                >
-                    ›
-                </button>
-
-
-                <div class="gallery-counter">
-
-                    <span id="currentNumber">
-                        1
-                    </span>
-
-                    /
-
-                    <?= count($images) ?>
-
-                </div>
-
-
+                ><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             <?php endif; ?>
 
 
         <?php endif; ?>
 
 
-    </main>
+    </section>
+
+    <div class="gallery-controls" aria-label="Picture navigation">
+        <?php if (!empty($images)): ?>
+            <div class="gallery-counter" aria-live="polite">
+                <span id="currentNumber">1</span> / <?= count($images) ?>
+            </div>
+        <?php endif; ?>
+
+    </div>
 
 
 </div>
+
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="site-footer-legal" aria-label="Legal notice">
+            <span class="footer-legal-line"><span class="footer-asterisk">*</span> By using this website, you agree to our</span>
+            <span class="footer-legal-line"><span class="footer-asterisk">*</span> <a href="terms.php" class="footer-link">Terms &amp; Conditions</a> and <a href="privacy.php" class="footer-link">Privacy Policy</a></span>
+        </div>
+    </div>
+</footer>
 
 
 <?php if (!empty($images)): ?>
@@ -578,11 +536,6 @@ function previousImage() {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Keyboard controls
-|--------------------------------------------------------------------------
-*/
 
 document.addEventListener(
     "keydown",
@@ -615,6 +568,7 @@ document.addEventListener(
 <?php endif; ?>
 
 
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 
 </html>

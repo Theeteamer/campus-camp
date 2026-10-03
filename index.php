@@ -3,11 +3,7 @@
 require_once __DIR__ . "/config/database.php";
 
 
-/*
-|--------------------------------------------------------------------------
-| Get available locations
-|--------------------------------------------------------------------------
-*/
+
 
 $locations = [];
 
@@ -30,14 +26,7 @@ if ($result) {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Get all house types
-|--------------------------------------------------------------------------
-|
-| These are displayed initially when "Any location" is selected.
-|
-*/
+
 
 $house_types = [];
 
@@ -94,9 +83,6 @@ if ($result) {
 <body>
 
 
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
 
 <header class="site-header">
 
@@ -114,17 +100,7 @@ if ($result) {
 </header>
 
 
-
-<!-- =========================================================
-     MAIN
-     ========================================================= -->
-
 <main>
-
-
-    <!-- =====================================================
-         SEARCH SECTION
-         ===================================================== -->
 
     <section class="search-section">
 
@@ -137,7 +113,7 @@ if ($result) {
 
 
             <p class="search-subtitle">
-                Simple student accommodation search.
+                Where do you want your next stay to be?
             </p>
 
 
@@ -196,7 +172,7 @@ if ($result) {
                 <div class="search-field">
 
                     <label for="house_type">
-                        House Type
+                        Type of house
                     </label>
 
 
@@ -237,10 +213,11 @@ if ($result) {
                 <button
                     type="submit"
                     class="search-button"
+                    aria-label="Search"
+                    title="Search"
                 >
-
-                    SEARCH
-
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                    <span class="button-label">Search</span>
                 </button>
 
 
@@ -248,11 +225,13 @@ if ($result) {
 
             <div class="provider-prompt">
                 <p class="provider-question"><em>Are you an Accommodation Provider?</em></p>
-                <p class="provider-label">Accommodation provider</p>
                 <p class="provider-copy">
                     Make listings with <span class="brand-word">Campus-Camp</span><span class="brand-reg">&reg;</span>
                 </p>
-                <a href="provider_rules.php" class="search-button-link">List</a>
+                <a href="provider_rules.php" class="search-button-link" aria-label="List a property" title="List a property">
+                    <i class="fa fa-home" aria-hidden="true"></i>
+                    <span class="button-label">List</span>
+                </a>
             </div>
 
 
@@ -528,6 +507,7 @@ locationSelect.addEventListener(
 </script>
 
 
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 
 </html>

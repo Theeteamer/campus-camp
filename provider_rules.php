@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Provider Regulations &amp; Rules - Campus-Camp&reg;</title>
+    <title>Provider Regulations &amp; Rules</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= filemtime(__DIR__ . '/css/styles.css') ?>">
 </head>
 
@@ -23,7 +23,9 @@
 <main class="legal-page">
     <div class="container legal-container">
         <div class="legal-topbar">
-            <a href="index.php" class="legal-return">HOME</a>
+            <a href="index.php" class="legal-return" aria-label="Back" title="Back">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+            </a>
         </div>
 
         <h1>Regulations &amp; Rules for Accommodation Providers</h1>
@@ -51,15 +53,24 @@
         <section class="provider-contact" aria-labelledby="provider-contact-heading">
             <h2 id="provider-contact-heading">Accommodation Officer</h2>
             <p>
-                Phone: 07 00255255
+                Phone: <span class="contact-phone">07 00255255</span>
             </p>
             <p>
-                Email: list@campus-camp.com
+                Email: <a class="contact-email" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=list%40campus-camp.com">list@campus-camp.com</a>
             </p>
             <div class="provider-contact-actions">
-                <a class="search-button-link" href="tel:0700255255">Call</a>
-                <a class="search-button-link" href="https://wa.me/254700255255" target="_blank" rel="noopener">WhatsApp</a>
-                <a class="search-button-link" href="mailto:list@campus-camp.com">Send Mail</a>
+                <a class="search-button-link" href="tel:0700255255" aria-label="Call the accommodation officer" title="Call">
+                    <i class="fa fa-phone" aria-hidden="true"></i>
+                    <span class="button-label">Call</span>
+                </a>
+                <a class="search-button-link" href="https://wa.me/254700255255" target="_blank" rel="noopener" aria-label="Message the accommodation officer on WhatsApp" title="WhatsApp">
+                    <i class="fa fa-whatsapp" aria-hidden="true"></i>
+                    <span class="button-label">WhatsApp</span>
+                </a>
+                <a class="search-button-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=list%40campus-camp.com" aria-label="Email the accommodation officer" title="Send mail">
+                    <i class="fa fa-envelope" aria-hidden="true"></i>
+                    <span class="button-label">Email</span>
+                </a>
             </div>
         </section>
     </div>
@@ -74,5 +85,6 @@
     </div>
 </footer>
 
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>"></script>
 </body>
 </html>

@@ -71,14 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         try {
 
-            /*
-            |--------------------------------------------------------------------------
-            | 1. CHECK WHETHER LANDLORD ALREADY EXISTS
-            |--------------------------------------------------------------------------
-            |
-            | Phone number is used as the main identifier.
-            |
-            */
+            
 
             $landlord_stmt = $conn->prepare("
                 SELECT id
@@ -103,22 +96,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $landlord_stmt->close();
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | 2. USE EXISTING LANDLORD OR CREATE NEW ONE
-            |--------------------------------------------------------------------------
-            */
-
             if ($existing_landlord) {
 
                 $landlord_id =
                     (int)$existing_landlord["id"];
-
-
-                /*
-                | Update the landlord's details in case
-                | the administrator corrected them.
-                */
 
                 $update_landlord = $conn->prepare("
                     UPDATE landlords
@@ -180,13 +161,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $create_landlord->close();
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | 3. CREATE PROPERTY
-            |--------------------------------------------------------------------------
-            */
-
             $property_stmt = $conn->prepare("
                 INSERT INTO properties
                 (
@@ -225,13 +199,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $property_stmt->close();
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | 4. CREATE ROOM RECORD
-            |--------------------------------------------------------------------------
-            */
-
             $status =
                 $available_rooms > 0
                     ? "Available"
@@ -264,13 +231,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $room_stmt->close();
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | 5. CREATE FACILITIES
-            |--------------------------------------------------------------------------
-            */
-
             $facility_stmt = $conn->prepare("
                 INSERT INTO facilities
                 (
@@ -300,13 +260,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $facility_stmt->close();
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | SUCCESS
-            |--------------------------------------------------------------------------
-            */
-
             $conn->commit();
 
             header("Location: properties.php");
@@ -335,7 +288,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Add Property - Campus-Camp®</title>
+    <title>Add Property </title>
 
     <link
         rel="stylesheet"
@@ -353,37 +306,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <strong><img class="brand-image" src="../images/ofcampus-logo.png" alt="Campus-Camp®"><span class="admin-context">Admin</span></strong>
 
         <div>
-
-            <a href="dashboard.php">Dashboard</a>
-
-            &nbsp; | &nbsp;
-
-            <a href="properties.php">Properties</a>
-
-            &nbsp; | &nbsp;
-
-            <a href="logout.php">Logout</a>
-
+            <a href="logout.php">Log out</a>
         </div>
 
     </div>
 
 </header>
 
-
 <main class="admin-main">
+
+    <div class="admin-content-actions">
+        <div class="container">
+            <a href="properties.php" class="cancel-button" aria-label="Back to properties" title="Back to properties">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span class="button-label">Back</span>
+            </a>
+        </div>
+    </div>
 
     <div class="container">
 
-        <div class="admin-page-title">
+        <div class="admin-page-title add-property-page-title">
 
             <div>
 
                 <h1>Add Property</h1>
 
-                <p>
-                    Add accommodation and landlord information.
-                </p>
 
             </div>
 
@@ -420,7 +368,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     type="text"
                     name="landlord_name"
                     id="landlord_name"
-                    placeholder="e.g. John Otieno"
+                
                     required
                 >
 
@@ -433,7 +381,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     type="tel"
                     name="landlord_phone"
                     id="landlord_phone"
-                    placeholder="e.g. 0712345678"
+                
                     required
                 >
 
@@ -446,7 +394,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     type="text"
                     name="landlord_location"
                     id="landlord_location"
-                    placeholder="e.g. Nyanchwa"
+      
                     required
                 >
 
@@ -467,7 +415,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     type="text"
                     name="name"
                     id="name"
-                    placeholder="e.g. Sunrise Bedsitters"
                     required
                 >
 
@@ -480,13 +427,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     type="text"
                     name="location"
                     id="location"
-                    placeholder="e.g. Nyanchwa"
+            
                     required
                 >
 
 
                 <label for="house_type">
-                    House Type *
+                    Type of Housing *
                 </label>
 
                 <div class="select-wrap">
@@ -530,7 +477,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     id="price"
                     min="0"
                     step="0.01"
-                    placeholder="4500"
                     required
                 >
 
@@ -551,7 +497,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     </option>
 
                     <option value="Semester">
-                        Semester
+                        Semester / 4 Months
                     </option>
 
                     </select>
@@ -568,7 +514,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     id="deposit"
                     min="0"
                     step="0.01"
-                    placeholder="Leave blank if not listed"
                 >
 
 
@@ -593,7 +538,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     name="description"
                     id="description"
                     rows="5"
-                    placeholder="Short description..."
                 ></textarea>
 
             </div>
@@ -633,16 +577,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <button
                     type="submit"
                     class="admin-button"
+                    aria-label="Save property"
+                    title="Save property"
                 >
-                    SAVE PROPERTY
+                    <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                    <span class="button-label">Save</span>
                 </button>
-
-                <a
-                    href="properties.php"
-                    class="cancel-button"
-                >
-                    CANCEL
-                </a>
 
             </div>
 
@@ -652,6 +592,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 </main>
 
+<?php include __DIR__ . "/footer.php"; ?>
+<script src="../js/main.js?v=<?= filemtime(__DIR__ . '/../js/main.js') ?>"></script>
 </body>
 
 </html>
