@@ -46,7 +46,7 @@ if ($result) {
 
 <body>
 
-<header class="admin-header">
+<header class="admin-header dashboard-header">
 
     <div class="container admin-header-inner">
 
@@ -54,11 +54,7 @@ if ($result) {
 
         <div>
 
-            <span>
-                <?= htmlspecialchars($_SESSION["admin_username"]) ?>
-            </span>
 
-            &nbsp; | &nbsp;
 
             <a href="logout.php">Log out</a>
 
