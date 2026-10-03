@@ -372,6 +372,10 @@ h2 {
 	min-height: 38px;
 }
 
+.dashboard-header .admin-header-inner {
+	min-height: 75px;
+}
+
 .admin-header-inner strong {
 	font-size: 14px;
 	font-weight: 900;

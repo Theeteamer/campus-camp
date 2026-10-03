@@ -38,6 +38,39 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $wifi = isset($_POST["wifi"]) ? 1 : 0;
     $security = isset($_POST["security"]) ? 1 : 0;
 
+    $images_to_upload = [];
+    $image_error = "";
+    $allowed_image_types = [
+        "image/jpeg" => "jpg",
+        "image/png" => "png",
+        "image/webp" => "webp",
+    ];
+
+    if (isset($_FILES["images"])) {
+        foreach ($_FILES["images"]["name"] as $index => $original_name) {
+            if ($original_name === "" && $_FILES["images"]["error"][$index] === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            if ($_FILES["images"]["error"][$index] !== UPLOAD_ERR_OK) {
+                $image_error = "Each selected picture must upload successfully.";
+                break;
+            }
+
+            $temporary_path = $_FILES["images"]["tmp_name"][$index];
+            $mime_type = mime_content_type($temporary_path);
+            if (!isset($allowed_image_types[$mime_type])) {
+                $image_error = "Pictures must be JPG, PNG, or WebP files.";
+                break;
+            }
+
+            $images_to_upload[] = [
+                "temporary_path" => $temporary_path,
+                "extension" => $allowed_image_types[$mime_type],
+            ];
+        }
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -57,6 +90,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $error = "Please complete all required fields.";
 
+    } elseif ($image_error !== "") {
+
+        $error = $image_error;
+
     } elseif (!in_array($payment_period, ["Monthly", "Semester"], true)) {
 
         $error = "Invalid payment period.";
@@ -68,6 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } else {
 
         $conn->begin_transaction();
+        $uploaded_image_paths = [];
 
         try {
 
@@ -260,6 +298,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $facility_stmt->close();
 
+            if (!empty($images_to_upload)) {
+                $upload_directory = __DIR__ . "/../uploads/properties/" . $property_id . "/";
+                $database_directory = "uploads/properties/" . $property_id . "/";
+                if (!is_dir($upload_directory) && !mkdir($upload_directory, 0755, true) && !is_dir($upload_directory)) {
+                    throw new Exception("Unable to create the property picture directory.");
+                }
+
+                foreach ($images_to_upload as $image) {
+                    $filename = uniqid("property_", true) . "." . $image["extension"];
+                    $destination = $upload_directory . $filename;
+                    if (!move_uploaded_file($image["temporary_path"], $destination)) {
+                        throw new Exception("Unable to save a property picture.");
+                    }
+                    $uploaded_image_paths[] = $destination;
+
+                    $image_path = $database_directory . $filename;
+                    $image_stmt = $conn->prepare("
+                        INSERT INTO property_images (property_id, image_path)
+                        VALUES (?, ?)
+                    ");
+                    $image_stmt->bind_param("is", $property_id, $image_path);
+                    if (!$image_stmt->execute()) {
+                        throw new Exception("Unable to save picture information.");
+                    }
+                    $image_stmt->close();
+                }
+            }
+
+
             $conn->commit();
 
             header("Location: properties.php");
@@ -268,6 +335,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } catch (Exception $e) {
 
             $conn->rollback();
+            foreach ($uploaded_image_paths as $uploaded_image_path) {
+                if (is_file($uploaded_image_path)) {
+                    unlink($uploaded_image_path);
+                }
+            }
 
             $error = $e->getMessage();
         }
@@ -351,6 +423,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <form
             method="POST"
+            enctype="multipart/form-data"
             class="admin-form"
         >
 
@@ -568,6 +641,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <input type="checkbox" name="security">
                     Security
                 </label>
+
+            </div>
+
+            <div class="form-section">
+
+                <h2>Pictures</h2>
+
+                <label for="images">
+                    Add Pictures
+                </label>
+
+                <input
+                    type="file"
+                    name="images[]"
+                    id="images"
+                    class="admin-file-input"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                >
+
+                <p>Select JPG, PNG, or WebP pictures. You can choose multiple files.</p>
 
             </div>
 

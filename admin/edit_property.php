@@ -852,10 +852,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     href="property_images.php?id=<?= (int)$property["id"] ?>"
                     class="admin-button"
                     aria-label="Add property images"
-                    title="Add images"
+                    title="Add pictures"
                 >
                     <i class="fa fa-picture-o" aria-hidden="true"></i>
-                    <span class="button-label">Add Images</span>
+                    <span class="button-label">Add Pictures</span>
                 </a>
             </div>
 
