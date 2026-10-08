@@ -4,6 +4,7 @@
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const bypassedForms = new WeakSet();
     let navigationPending = false;
+    let activeNavigationId = 0;
     let documentLeaving = false;
     let pendingDeleteLink = null;
     let fragmentNavigationUsed = false;
@@ -218,11 +219,12 @@
         hideLoading(false);
     });
 
-    function showLoading(continueNavigation) {
-        if (navigationPending) {
+    function showLoading(continueNavigation, supersedePending) {
+        if (navigationPending && !supersedePending) {
             return false;
         }
 
+        const navigationId = ++activeNavigationId;
         const loadingStartedAt = performance.now();
         navigationPending = true;
         updateLoadingPosition();
@@ -238,7 +240,11 @@
                 window.requestAnimationFrame(resolve);
             });
 
-            if (!navigationPending || documentLeaving) {
+            if (
+                !navigationPending ||
+                documentLeaving ||
+                navigationId !== activeNavigationId
+            ) {
                 return;
             }
 
@@ -247,7 +253,7 @@
                 return;
             }
 
-            const navigation = continueNavigation();
+            const navigation = continueNavigation(navigationId);
             if (navigation && typeof navigation.then === "function") {
                 function finishAfterMinimumDuration() {
                     const remainingDuration = Math.max(
@@ -256,7 +262,11 @@
                     );
 
                     window.setTimeout(function () {
-                        if (navigationPending && !documentLeaving) {
+                        if (
+                            navigationPending &&
+                            !documentLeaving &&
+                            navigationId === activeNavigationId
+                        ) {
                             hideLoading(true);
                         }
                     }, remainingDuration);
@@ -281,15 +291,18 @@
 
     function canNavigatePartially(url) {
         return url.origin === window.location.origin &&
-            isAdminUrl(url) === Boolean(document.querySelector(".admin-header"));
+            !isAdminUrl(url) &&
+            !document.querySelector(".admin-header");
     }
 
-    async function loadPartial(url, updateHistory, scrollY) {
+    async function loadPartial(url, updateHistory, scrollY, navigationId) {
         const destination = new URL(url, window.location.href);
         const currentMain = document.querySelector("main");
 
         if (!currentMain || !canNavigatePartially(destination)) {
-            window.location.assign(destination.href);
+            if (navigationId === activeNavigationId) {
+                window.location.assign(destination.href);
+            }
             return;
         }
 
@@ -302,6 +315,10 @@
                 credentials: "same-origin"
             });
 
+            if (navigationId !== activeNavigationId) {
+                return;
+            }
+
             if (
                 !response.ok ||
                 response.redirected ||
@@ -312,6 +329,10 @@
             }
 
             const html = await response.text();
+            if (navigationId !== activeNavigationId) {
+                return;
+            }
+
             const template = document.createElement("template");
             template.innerHTML = html;
             const nextMain = template.content.querySelector("main");
@@ -353,8 +374,16 @@
                 });
             }));
 
+            if (navigationId !== activeNavigationId) {
+                return;
+            }
+
             if (document.fonts && document.fonts.ready) {
                 await document.fonts.ready;
+            }
+
+            if (navigationId !== activeNavigationId) {
+                return;
             }
 
             nextMain.classList.add("page-content-ready");
@@ -364,6 +393,10 @@
                 });
             });
         } catch (error) {
+            if (navigationId !== activeNavigationId) {
+                return;
+            }
+
             console.error("Partial page navigation failed; loading the full page instead.", error);
             window.location.assign(destination.href);
         }
@@ -417,8 +450,8 @@
                 return;
             }
 
-            showLoading(function () {
-                return loadPartial(destination.href, true, 0);
+            showLoading(function (navigationId) {
+                return loadPartial(destination.href, true, 0, navigationId);
             });
             return;
         }
@@ -493,8 +526,8 @@
 
         event.preventDefault();
 
-        showLoading(function () {
-            return loadPartial(destination.href, true, 0);
+        showLoading(function (navigationId) {
+            return loadPartial(destination.href, true, 0, navigationId);
         });
     });
 
@@ -506,9 +539,14 @@
             return;
         }
 
-        showLoading(function () {
-            return loadPartial(destination.href, false, event.state && event.state.scrollY);
-        });
+        showLoading(function (navigationId) {
+            return loadPartial(
+                destination.href,
+                false,
+                event.state && event.state.scrollY,
+                navigationId
+            );
+        }, true);
     });
 
     document.addEventListener("change", function (event) {
